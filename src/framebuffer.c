@@ -18,10 +18,6 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c)
 void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg)
 {
     // TODO : Implement
-    // uint16_t *fb = (uint16_t *)0x000B8000;
-
-    // fb[(row * 80 + col)] = c;
-    // fb[(row * 80 + col) + 1] = ((fg & 0x0F) << 4) | (bg & 0x0F);
     uint16_t color;
     volatile uint16_t * location;
     volatile uint16_t * fb;
@@ -34,11 +30,5 @@ void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg)
 
 void framebuffer_clear(void)
 {
-    // TODO : Implement
-    // for (int i = 0; i < 25; i ++) {
-    //     for (int j = 0; j < 80; j ++) {
-    //         framebuffer_write(i, j, ' ', 0xf, 0x0);
-    //     }
-    // }
     memset(MEMORY_FRAMEBUFFER, 0, 25 * 80 * 2);
 }

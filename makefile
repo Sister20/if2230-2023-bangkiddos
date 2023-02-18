@@ -29,11 +29,11 @@ clean:
 kernel:
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel_loader.s -o $(OUTPUT_FOLDER)/kernel_loader.o
 # TODO: Compile C file with CFLAGS
-	@cd $(SOURCE_FOLDER) && $(CC) $(CFLAGS) kernel.c -o kernel.o -Wall -Wextra -Werror
-	@cd $(SOURCE_FOLDER) && $(CC) $(CFLAGS) framebuffer.c -o framebuffer.o -Wall -Wextra -Werror
-	@cd $(SOURCE_FOLDER) && $(CC) $(CFLAGS) portio.c -o portio.o -Wall -Wextra -Werror
-	@cd $(SOURCE_FOLDER) && $(CC) $(CFLAGS) stdmem.c -o stdmem.o -Wall -Wextra -Werror
-	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
+	$(CC) $(CFLAGS) $(SOURCE_FOLDER)/kernel.c -o $(OUTPUT_FOLDER)/kernel.o -Wall -Wextra -Werror
+	$(CC) $(CFLAGS) $(SOURCE_FOLDER)/framebuffer.c -o $(OUTPUT_FOLDER)/framebuffer.o -Wall -Wextra -Werror
+	$(CC) $(CFLAGS) $(SOURCE_FOLDER)/portio.c -o $(OUTPUT_FOLDER)/portio.o -Wall -Wextra -Werror
+	$(CC) $(CFLAGS) $(SOURCE_FOLDER)/stdmem.c -o $(OUTPUT_FOLDER)/stdmem.o -Wall -Wextra -Werror
+	@$(LIN) $(LFLAGS) $(OUTPUT_FOLDER)/*.o -o $(OUTPUT_FOLDER)/kernel
 	@echo Linking object files and generate elf32...
 	@rm -f *.o
 
