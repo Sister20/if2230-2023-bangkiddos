@@ -5,10 +5,10 @@
 | Name                           |   Nim    |
 | ------------------------------ | :------: |
 | Muhammad Bangkit Dwi Cahyono   | 13521055 |
-|                                | 13521069 |
-|                                | 13521081 |
-|                                | 13521085 |
-|                                | 13521103 |
+| Louis Caesa Kesuma             | 13521069 |
+| Bagas Aryo Seto                | 13521081 |
+| Addin Munawwar Yusuf           | 13521085 |
+| Aulia Mey Diva Annandya        | 13521103 |
 
 ## Features
 1. Print `Hai!` to screen
