@@ -17,6 +17,14 @@ extern struct GDTR _gdt_gdtr;
  * @param base_mid     8-bit middle-bit base address
  * @param type_bit     4-bit contain type flags
  * @param non_system   1-bit contain system
+ * @param dpl          2-bit contain descriptor privilege level
+ * @param preset_bit   1-bit contain flag
+ * @param segment_high 4-bit higher-bit segment limit
+ * @param available    1-bit available bit
+ * @param long_mode    1-bit contain flag
+ * @param big          1-bit default operation
+ * @param gran         1-bit contain flag
+ * @param base_high    8-bit higher-bit base address
  */
 struct SegmentDescriptor {
     // First 32-bit
@@ -24,10 +32,20 @@ struct SegmentDescriptor {
     uint16_t base_low;
 
     // Next 16-bit (Bit 32 to 47)
-    uint8_t             base_mid;
-    uint8_t type_bit   : 4;
-    uint8_t non_system : 1;
-    // TODO : Continue GDT definition
+    uint8_t               base_mid;
+    uint8_t type_bit     : 4;
+    uint8_t non_system   : 1;
+
+    /* Continue GDT definition */
+    uint8_t dpl          : 2;
+    uint8_t present_bit  : 1;
+    uint8_t segment_high : 4;
+    uint8_t available    : 1;
+    uint8_t long_mode    : 1;
+    uint8_t big          : 1;
+    uint8_t gran         : 1;
+
+    uint8_t               base_high;
 
 } __attribute__((packed));
 

@@ -34,12 +34,14 @@ loader:                                        ; the loader label (defined as en
 enter_protected_mode:
     cli
     mov  eax, [esp+4]
-    ; TODO: Load GDT from GDTDescriptor
-    ;       eax at this line will carry GDTR location, dont forget to use square bracket [eax]
+    ; Load GDT from GDTDescriptor
+    ; eax at this line will carry GDTR location, use square bracket [eax]
+    lgdt [eax]
 
     mov  eax, cr0
-    ; TODO: Set bit-0 (Protection Enable bit-flag) in Control Register 0 (CR0)
-    ;       Set eax with above condition, eax will be copied to CR0 with next instruction
+    ; Set bit-0 (Protection Enable bit-flag) in Control Register 0 (CR0)
+    ; Set eax with above condition, eax will be copied to CR0 with next instruction
+    or al, 1
     mov  cr0, eax
 
     ; Far jump to update cs register
@@ -47,8 +49,10 @@ enter_protected_mode:
     jmp 0x8:flush_cs
 flush_cs:
     mov ax, 10h
-    ; TODO: Set all data segment register with 0x10
-    ;       Segments register need to set with 0x10: ss, ds, es
+    ; Set all data segment register with 0x10
+    ; Segments register need to set with 0x10: ss, ds, es
     mov ss, ax
+    mov ds, ax
+    mov es, ax
 
     ret
