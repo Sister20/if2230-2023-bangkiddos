@@ -1,8 +1,9 @@
 #include "lib-header/interrupt.h"
 #include "lib-header/portio.h"
+#include "lib-header/keyboard.h"
 
 /** 
- * Note to developers :
+ * Note for others :
  * in and out are defined in portio.h
  * 
  * Start of PIC Remapping Section 
@@ -55,6 +56,16 @@ void main_interrupt_handler(
     __attribute__((unused)) struct InterruptStack info
 ) {
     switch (int_number) {
-
+        case PIC1_OFFSET + IRQ_KEYBOARD:
+            keyboard_isr();
+            break;
+        default:
+            break;
     }
+}
+
+/* Activate PIC mask for keyboard only */
+void activate_keyboard_interrupt(void){
+    out(PIC1_DATA, PIC_DISABLE_ALL_MASK ^ (1 << IRQ_KEYBOARD)); //mask irq for keyboard only
+    out(PIC2_DATA, PIC_DISABLE_ALL_MASK); //mask irq for slave pic
 }
