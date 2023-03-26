@@ -4,7 +4,6 @@
 #include "disk.h"
 #include "stdtype.h"
 
-
 /**
  * FAT32 - IF2230 edition - 2023
  * Check "IF2230 - Guidebook - Milestone 2" for more details
@@ -220,7 +219,6 @@ void read_clusters(void *ptr, uint32_t cluster_number, uint8_t cluster_count);
  */
 int8_t read_directory(struct FAT32DriverRequest request);
 
-
 /**
  * FAT32 read, read a file from file system.
  *
@@ -236,7 +234,6 @@ int8_t read(struct FAT32DriverRequest request);
  * @return Error code: 0 success - 1 file/folder already exist - 2 invalid parent cluster - -1 unknown
  */
 int8_t write(struct FAT32DriverRequest request);
-
 
 /**
  * FAT32 delete, delete a file or empty directory (only 1 DirectoryEntry) in file system.

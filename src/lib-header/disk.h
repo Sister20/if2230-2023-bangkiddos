@@ -30,7 +30,11 @@ struct BlockBuffer {
  * ATA PIO logical block address read blocks. Will blocking until read is completed.
  * Note: ATA PIO will use 2-bytes per read/write operation.
  * Recommended to use struct BlockBuffer
+<<<<<<< HEAD
+ *
+=======
  * 
+>>>>>>> 09e15783a6cb1e8ed85aae8fce05310c22aa82a7
  * @param ptr                   Pointer for storing reading data, this pointer should point to already allocated memory location.
  *                              With allocated size positive integer multiple of BLOCK_SIZE, ex: buf[1024]
  * @param logical_block_address Block address to read data from. Use LBA addressing
