@@ -29,12 +29,16 @@ extern const char keyboard_scancode_1_to_ascii_map[256];
  * @param keyboard_input_on  Indicate whether keyboard ISR is activated or not
  * @param buffer_index       Used for keyboard_buffer index
  * @param keyboard_buffer    Storing keyboard input values in ASCII
+ * @param capslock_on
  */
 struct KeyboardDriverState {
     bool    read_extended_mode;
     bool    keyboard_input_on;
     uint8_t buffer_index;
     char    keyboard_buffer[KEYBOARD_BUFFER_SIZE];
+    
+    // tambahan
+    bool    capslock_on;
 } __attribute((packed));
 
 /* -- Driver Interfaces -- */

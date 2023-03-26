@@ -4,6 +4,7 @@
 #include "lib-header/stdmem.h"
 #include "lib-header/interrupt.h"
 
+// Define the keyboard scancode to ASCII map
 const char keyboard_scancode_1_to_ascii_map[256] = {
       0, 0x1B, '1', '2', '3', '4', '5', '6',  '7', '8', '9',  '0',  '-', '=', '\b', '\t',
     'q',  'w', 'e', 'r', 't', 'y', 'u', 'i',  'o', 'p', '[',  ']', '\n',   0,  'a',  's',
@@ -27,7 +28,8 @@ const char keyboard_scancode_1_to_ascii_map[256] = {
 static struct KeyboardDriverState keyboard_state = {
     .keyboard_input_on = FALSE,
     .buffer_index      = 0,
-    .keyboard_buffer   = {0}
+    .keyboard_buffer   = {0},
+    .capslock_on       = FALSE
 };
 
 void keyboard_state_activate(void){
@@ -53,7 +55,7 @@ void keyboard_isr(void){
         keyboard_state.buffer_index = 0;
     else {
         uint8_t  scancode    = in(KEYBOARD_DATA_PORT);
-        char     mapped_char = keyboard_scancode_1_to_ascii_map[scancode];
+        char     mapped_char  = keyboard_scancode_1_to_ascii_map[scancode];
 
         uint8_t c_row, c_col; // cursor row and column
         framebuffer_get_cursor(&c_row, &c_col);
@@ -78,11 +80,24 @@ void keyboard_isr(void){
             // Reading stops when enter is pressed.
             keyboard_state_deactivate();
         } else {
-            keyboard_state.keyboard_buffer[keyboard_state.buffer_index++] = mapped_char;
-            framebuffer_write(c_row, c_col, mapped_char, 0xF, 0x0);
-            framebuffer_set_cursor(c_row, c_col + 1);
+            // Handle uppercase letters for Shift and Capslock
+
+            if (scancode == 0x3A) {
+                keyboard_state.capslock_on = !keyboard_state.capslock_on;
+            } else {
+                if (keyboard_state.capslock_on) {
+                    if (mapped_char >= 'a' && mapped_char <= 'z') {
+                        mapped_char -= 'a' - 'A'; // convert to uppercase
+                    } else if (mapped_char >= 'A' && mapped_char <= 'Z') {
+                        mapped_char += 'a' - 'A'; // convert to lowercase
+                    }
+                }
+
+                keyboard_state.keyboard_buffer[keyboard_state.buffer_index++] = mapped_char;
+                framebuffer_write(c_row, c_col, mapped_char, 0xF, 0x0);
+                framebuffer_set_cursor(c_row, c_col + 1);
+            }
         }
     }
     pic_ack(IRQ_KEYBOARD);
-
 }
