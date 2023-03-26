@@ -15,6 +15,21 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c)
     out(CURSOR_PORT_DATA, (uint8_t) ((pos >> 8) & 0xFF));
 }
 
+void framebuffer_get_cursor(uint8_t *r, uint8_t *c)
+{
+    /* Implementation */
+    uint16_t pos;
+    
+    out(CURSOR_PORT_CMD, 15);
+    pos = in(CURSOR_PORT_DATA) & 0xFF;
+
+    out(CURSOR_PORT_CMD, 14);
+    pos |= (in(CURSOR_PORT_DATA) & 0xFF) << 8;
+
+    *r = pos / 80;
+    *c = pos % 80;
+}
+
 void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg)
 {
     /* Implementation */

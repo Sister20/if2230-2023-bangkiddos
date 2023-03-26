@@ -30,8 +30,6 @@ static struct KeyboardDriverState keyboard_state = {
     .keyboard_buffer   = {0}
 };
 
-static int row = 0;
-
 void keyboard_state_activate(void){
     activate_keyboard_interrupt();
     keyboard_state.keyboard_input_on = TRUE;  
@@ -40,7 +38,6 @@ void keyboard_state_activate(void){
 void keyboard_state_deactivate(void){
     keyboard_state.keyboard_input_on = FALSE;
     keyboard_state.buffer_index      = 0;
-    memset(keyboard_state.keyboard_buffer, 0, KEYBOARD_BUFFER_SIZE);
 }
 
 void get_keyboard_buffer(char *buf){
@@ -57,29 +54,33 @@ void keyboard_isr(void){
     else {
         uint8_t  scancode    = in(KEYBOARD_DATA_PORT);
         char     mapped_char = keyboard_scancode_1_to_ascii_map[scancode];
-        
-        /**
-         * TODO:
-         * - handle extended scancode
-         * - change keyboard buffer clearance -> should not be cleared
-         * - handle multi row input with framebuffer_get_cursor()
-        */
+
+        uint8_t c_row, c_col; // cursor row and column
+        framebuffer_get_cursor(&c_row, &c_col);
 
         if (scancode & 0x80) { //ignore release interrupt
             // .. ignore
         } else if (mapped_char == '\b' && keyboard_state.buffer_index > 0) {
+            // backspace
             keyboard_state.buffer_index--;
-            framebuffer_set_cursor(row, keyboard_state.buffer_index);
-            framebuffer_write(row, keyboard_state.buffer_index, ' ', 0xF, 0x0);
+            framebuffer_set_cursor(c_row, c_col - 1);
+            framebuffer_write(c_row, c_col - 1, '\0', 0xF, 0x0);
         } else if (mapped_char == '\b' && keyboard_state.buffer_index == 0) {
-            // Do nothing
+            // Do nothing if backspace is pressed but there is no character to delete.
         } else if (mapped_char == '\n') {
+            keyboard_state.keyboard_buffer[keyboard_state.buffer_index++] = '\0';
+            framebuffer_set_cursor(c_row + 1, 0);
+            
+            /**
+             * buffer is still available at this point
+            */
+            
+            // Reading stops when enter is pressed.
             keyboard_state_deactivate();
-            row++;
         } else {
-            framebuffer_set_cursor(row, keyboard_state.buffer_index + 1);
-            framebuffer_write(row, keyboard_state.buffer_index, mapped_char, 0xF, 0x0);
             keyboard_state.keyboard_buffer[keyboard_state.buffer_index++] = mapped_char;
+            framebuffer_write(c_row, c_col, mapped_char, 0xF, 0x0);
+            framebuffer_set_cursor(c_row, c_col + 1);
         }
     }
     pic_ack(IRQ_KEYBOARD);
