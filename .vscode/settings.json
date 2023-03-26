@@ -2,6 +2,7 @@
     "debug.onTaskErrors": "debugAnyway",
     "files.associations": {
         "idt.h": "c",
-        "interrupt.h": "c"
+        "interrupt.h": "c",
+        "stdtype.h": "c"
     },
 }

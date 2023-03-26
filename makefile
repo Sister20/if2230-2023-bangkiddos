@@ -16,6 +16,8 @@ CFLAGS        = $(DEBUG_CFLAG) $(WARNING_CFLAG) $(STRIP_CFLAG) -m32 -c -I$(SOURC
 AFLAGS        = -f elf32 -g -F dwarf
 LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 
+# Disk
+DISK_NAME     = storage
 
 run: all
 	@qemu-system-i386 -s -S -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
@@ -60,3 +62,6 @@ iso: kernel
 	.
 	@cp $(OUTPUT_FOLDER)/iso/$(ISO_NAME).iso ./bin
 	@rm -r $(OUTPUT_FOLDER)/iso/
+
+disk:
+	@qemu-img create -f raw $(OUTPUT_FOLDER)/$(DISK_NAME).bin 4M
