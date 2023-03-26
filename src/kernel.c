@@ -4,6 +4,9 @@
 #include "lib-header/gdt.h"
 #include "lib-header/framebuffer.h"
 #include "lib-header/kernel_loader.h"
+#include "lib-header/idt.h"
+#include "lib-header/interrupt.h"
+#include "lib-header/keyboard.h"
 
 void printString(char *string, uint8_t row, uint8_t col) {
     uint8_t i = 0;
@@ -56,9 +59,13 @@ void amongus() {
 }
 
 void kernel_setup(void) {
+    /* Initialization */
     enter_protected_mode(&_gdt_gdtr);
+    pic_remap();
+    initialize_idt();
     framebuffer_clear();
-
-    
-    while (TRUE);
+    framebuffer_set_cursor(0, 0);
+    while (TRUE) {
+        keyboard_state_activate();
+    }
 }
