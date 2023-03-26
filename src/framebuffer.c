@@ -13,6 +13,10 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c)
     
     out(CURSOR_PORT_CMD, 14);
     out(CURSOR_PORT_DATA, (uint8_t) ((pos >> 8) & 0xFF));
+
+    // Display cursor character
+    uint16_t *location = (uint16_t *)(0xB8000 + 2 * pos);
+    *location = (' ' | 0x0F00);
 }
 
 void framebuffer_get_cursor(uint8_t *r, uint8_t *c)
