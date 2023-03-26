@@ -13,12 +13,10 @@ const uint8_t fs_signature[BLOCK_SIZE] = {
 };
 
 struct FAT32FileAllocationTable fat32_allocation_table = {
+    // fill all with FAT32_FAT_EMPTY_ENTRY
+    .cluster_map = {FAT32_FAT_EMPTY_ENTRY},
     // cluster 0, cluster 1, and root is always intialized
     .cluster_map[0] = (uint32_t) CLUSTER_0_VALUE,
     .cluster_map[1] = (uint32_t) CLUSTER_1_VALUE,
     .cluster_map[2] = (uint32_t) FAT32_FAT_END_OF_FILE,
-    // fill with empty values
-    // for (size_t i = 3; i < (size_t) CLUSTER_MAP_SIZE; i++) {
-    //     .cluster_map[i] = (uint32_t) FAT32_FAT_EMPTY_ENTRY,
-    // }
 };
