@@ -4,6 +4,9 @@
 #include "lib-header/stdmem.h"
 #include "lib-header/interrupt.h"
 
+#define LEFT_SHIFT_KEY 0x2A
+#define RIGHT_SHIFT_KEY 0x36
+
 // Define the keyboard scancode to ASCII map
 const char keyboard_scancode_1_to_ascii_map[256] = {
       0, 0x1B, '1', '2', '3', '4', '5', '6',  '7', '8', '9',  '0',  '-', '=', '\b', '\t',
@@ -29,7 +32,7 @@ static struct KeyboardDriverState keyboard_state = {
     .keyboard_input_on = FALSE,
     .buffer_index      = 0,
     .keyboard_buffer   = {0},
-    .capslock_on       = FALSE
+    .uppercase_on      = FALSE
 };
 
 void keyboard_state_activate(void){
@@ -60,8 +63,15 @@ void keyboard_isr(void){
         uint8_t c_row, c_col; // cursor row and column
         framebuffer_get_cursor(&c_row, &c_col);
 
-        if (scancode & 0x80) { //ignore release interrupt
-            // .. ignore
+        if (scancode & 0x80) { // ignore release interrupt
+            // check if the released key is the left or right Shift key, and update the shift state accordingly
+            if (scancode == (LEFT_SHIFT_KEY | 0x80)) {
+                keyboard_state.uppercase_on = !keyboard_state.uppercase_on;
+            } else if (scancode == (RIGHT_SHIFT_KEY | 0x80)) {
+                keyboard_state.uppercase_on = !keyboard_state.uppercase_on;
+            }
+        } else if (scancode == LEFT_SHIFT_KEY || scancode == RIGHT_SHIFT_KEY) {
+            keyboard_state.uppercase_on = !keyboard_state.uppercase_on;
         } else if (mapped_char == '\b' && keyboard_state.buffer_index > 0) {
             // backspace
             keyboard_state.buffer_index--;
@@ -83,9 +93,9 @@ void keyboard_isr(void){
             // Handle uppercase letters for Shift and Capslock
 
             if (scancode == 0x3A) {
-                keyboard_state.capslock_on = !keyboard_state.capslock_on;
+                keyboard_state.uppercase_on = !keyboard_state.uppercase_on;
             } else {
-                if (keyboard_state.capslock_on) {
+                if (keyboard_state.uppercase_on) {
                     if (mapped_char >= 'a' && mapped_char <= 'z') {
                         mapped_char -= 'a' - 'A'; // convert to uppercase
                     } else if (mapped_char >= 'A' && mapped_char <= 'Z') {
