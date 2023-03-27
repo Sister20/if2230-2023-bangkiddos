@@ -63,14 +63,15 @@ void keyboard_isr(void){
         uint8_t c_row, c_col; // cursor row and column
         framebuffer_get_cursor(&c_row, &c_col);
 
-        if (scancode & 0x80) { // ignore release interrupt
-            // check if the released key is the left or right Shift key, and update the shift state accordingly
+        if (scancode & 0x80) { // release interrupt
+            // check if the released key is the left or right Shift key
             if (scancode == (LEFT_SHIFT_KEY | 0x80)) {
                 keyboard_state.uppercase_on = !keyboard_state.uppercase_on;
             } else if (scancode == (RIGHT_SHIFT_KEY | 0x80)) {
                 keyboard_state.uppercase_on = !keyboard_state.uppercase_on;
             }
         } else if (scancode == LEFT_SHIFT_KEY || scancode == RIGHT_SHIFT_KEY) {
+            // check if pressed key is the left or right Shift key
             keyboard_state.uppercase_on = !keyboard_state.uppercase_on;
         } else if (mapped_char == '\b' && keyboard_state.buffer_index > 0) {
             // backspace
@@ -78,7 +79,7 @@ void keyboard_isr(void){
             framebuffer_set_cursor(c_row, c_col - 1);
             framebuffer_write(c_row, c_col - 1, '\0', 0xF, 0x0);
         } else if (mapped_char == '\b' && keyboard_state.buffer_index == 0) {
-            // Do nothing if backspace is pressed but there is no character to delete.
+            // do nothing if backspace is pressed but there is no character to delete.
         } else if (mapped_char == '\n') {
             keyboard_state.keyboard_buffer[keyboard_state.buffer_index++] = '\0';
             framebuffer_set_cursor(c_row + 1, 0);
@@ -90,7 +91,7 @@ void keyboard_isr(void){
             // Reading stops when enter is pressed.
             keyboard_state_deactivate();
         } else {
-            // Handle uppercase letters for Shift and Capslock
+            // handle uppercase letters for Shift and Capslock
 
             if (scancode == 0x3A) {
                 keyboard_state.uppercase_on = !keyboard_state.uppercase_on;
