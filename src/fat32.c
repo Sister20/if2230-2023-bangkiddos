@@ -41,7 +41,6 @@ bool is_empty_storage(void) {
 void create_fat32(void) {
     // Write fs_signature to boot sector
     write_blocks(fs_signature, BOOT_SECTOR, 1);
-    // write_blocks(&read, BOOT_SECTOR, 1);
 
     // Initialize FileAllocationTable (FAT)
     struct FAT32FileAllocationTable fat_table = fat32_allocation_table;
