@@ -1,7 +1,6 @@
 #include "lib-header/stdtype.h"
 #include "lib-header/fat32.h"
 #include "lib-header/stdmem.h"
-#include "lib-header/disk.h"
 
 const uint8_t fs_signature[BLOCK_SIZE] = {
     'C', 'o', 'u', 'r', 's', 'e', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',  ' ',
@@ -15,7 +14,7 @@ const uint8_t fs_signature[BLOCK_SIZE] = {
 
 struct FAT32FileAllocationTable fat32_allocation_table = {
     // fill all with FAT32_FAT_EMPTY_ENTRY
-    .cluster_map = {FAT32_FAT_EMPTY_ENTRY},
+    // .cluster_map = {FAT32_FAT_EMPTY_ENTRY},
     // cluster 0, cluster 1, and root is always intialized
     .cluster_map[0] = (uint32_t) CLUSTER_0_VALUE,
     .cluster_map[1] = (uint32_t) CLUSTER_1_VALUE,
@@ -23,7 +22,6 @@ struct FAT32FileAllocationTable fat32_allocation_table = {
 };
 
 struct FAT32DriverState driver_state = {0};
-struct BlockBuffer boot_sector = {0};
 
 void initialize_filesystem_fat32(void) {
     if (is_empty_storage()) {
@@ -34,13 +32,16 @@ void initialize_filesystem_fat32(void) {
 }
 
 bool is_empty_storage(void) {
-    read_blocks(&boot_sector, BOOT_SECTOR, 1); // read boot sector from block 0
-    return (memcmp(&boot_sector, fs_signature, BLOCK_SIZE) != 0);
+    struct ClusterBuffer read = {0};
+
+    read_blocks(&read, BOOT_SECTOR, 1); // read boot sector from block 0
+    return (memcmp(&read, fs_signature, BLOCK_SIZE) != 0);
 }
 
 void create_fat32(void) {
     // Write fs_signature to boot sector
-    write_clusters(&boot_sector, 0, 1);
+    write_blocks(fs_signature, BOOT_SECTOR, 1);
+    // write_blocks(&read, BOOT_SECTOR, 1);
 
     // Initialize FileAllocationTable (FAT)
     struct FAT32FileAllocationTable fat_table = fat32_allocation_table;
@@ -68,20 +69,37 @@ void read_clusters(void *ptr, uint32_t cluster_number, uint8_t cluster_count) {
     read_blocks(ptr, block_number, block_count);
 }
 
+int my_strlen(char *str) {
+	int count = 0;
+
+    while (*str != '\0') {
+        count ++;
+        str ++;
+    }
+
+	return count;
+}
 
 void init_directory_table(struct FAT32DirectoryTable *dir_table, char *name, uint32_t parent_dir_cluster) {
     // set all directory entries to be empty
-    for (int i = 0; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
-        strcpy(dir_table->table[i].name, "");
-        strcpy(dir_table->table[i].ext, "");
+    for (unsigned int i = 0; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
+        memset(dir_table->table[i].name, 0, 8);
+        memset(dir_table->table[i].ext, 0, 3);
         dir_table->table[i].cluster_high = 0;
         dir_table->table[i].cluster_low = 0;
         dir_table->table[i].filesize = 0;
     }
 
     // initialize the first directory entry with the parent directory
-    strncpy(dir_table->table[0].name, name, 8);
-    strncpy(dir_table->table[0].ext, "", 3);
+    for (int i = 0; i < my_strlen(name) && i < 8; i++) {
+        dir_table->table[0].name[i] = name[i];
+    }
+    for (int i = my_strlen(name); i < 8; i++) {
+        dir_table->table[0].name[i] = ' ';
+    }
+    for (int i = 0; i < 3; i++) {
+        dir_table->table[0].ext[i] = ' ';
+    }
     dir_table->table[0].attribute = ATTR_SUBDIRECTORY;
     dir_table->table[0].user_attribute = UATTR_NOT_EMPTY;
     dir_table->table[0].cluster_high = (parent_dir_cluster >> 16) & 0xFFFF;
