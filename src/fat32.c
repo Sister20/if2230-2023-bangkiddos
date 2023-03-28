@@ -22,7 +22,8 @@ struct FAT32FileAllocationTable fat32_allocation_table = {
     .cluster_map[2] = (uint32_t) FAT32_FAT_END_OF_FILE,
 };
 
-struct FAT32DriverState driver_state;
+struct FAT32DriverState driver_state = {0};
+struct BlockBuffer boot_sector = {0};
 
 void initialize_filesystem_fat32(void) {
     if (is_empty_storage()) {
@@ -32,24 +33,22 @@ void initialize_filesystem_fat32(void) {
     }
 }
 
-struct BlockBuffer boot_sector;
-
 bool is_empty_storage(void) {
-    read_blocks(&boot_sector, 0, 1); // read boot sector from block 0
+    read_blocks(&boot_sector, BOOT_SECTOR, 1); // read boot sector from block 0
     return (memcmp(&boot_sector, fs_signature, BLOCK_SIZE) != 0);
 }
 
 void create_fat32(void) {
     // Write fs_signature to boot sector
-    write_blocks(&boot_sector, 0, 1);
+    write_clusters(&boot_sector, 0, 1);
 
     // Initialize FileAllocationTable (FAT)
     struct FAT32FileAllocationTable fat_table = fat32_allocation_table;
     write_clusters(&fat_table, 1, 1);
 
     // Initialize DirectoryTable
-    struct FAT32DirectoryTable dir_table;
-    init_directory_table(&dir_table, "", 0);
+    struct FAT32DirectoryTable dir_table = {0};
+    init_directory_table(&dir_table, "bangkiddOS", 0);
     write_clusters(&dir_table, 2, 1);
 }
 
