@@ -22,7 +22,8 @@ struct FAT32FileAllocationTable fat32_allocation_table = {
     .cluster_map[2] = (uint32_t) FAT32_FAT_END_OF_FILE,
 };
 
-struct FAT32DriverState driver_state;
+struct FAT32DriverState driver_state = {0};
+struct BlockBuffer boot_sector = {0};
 
 void initialize_filesystem_fat32(void) {
     if (is_empty_storage()) {
@@ -32,23 +33,21 @@ void initialize_filesystem_fat32(void) {
     }
 }
 
-struct BlockBuffer boot_sector;
-
 bool is_empty_storage(void) {
-    read_blocks(&boot_sector, 0, 1); // read boot sector from block 0
+    read_blocks(&boot_sector, BOOT_SECTOR, 1); // read boot sector from block 0
     return (memcmp(&boot_sector, fs_signature, BLOCK_SIZE) != 0);
 }
 
 void create_fat32(void) {
     // Write fs_signature to boot sector
-    write_blocks(&boot_sector, 0, 1);
+    write_clusters(&boot_sector, 0, 1);
 
     // Initialize FileAllocationTable (FAT)
     struct FAT32FileAllocationTable fat_table = fat32_allocation_table;
     write_clusters(&fat_table, 1, 1);
 
     // Initialize DirectoryTable
-    struct FAT32DirectoryTable dir_table;
+    struct FAT32DirectoryTable dir_table = {0};
     init_directory_table(&dir_table, "bangkiddOS", 0);
     write_clusters(&dir_table, 2, 1);
 }
@@ -67,4 +66,25 @@ void read_clusters(void *ptr, uint32_t cluster_number, uint8_t cluster_count) {
     uint8_t block_count = cluster_count * 4;
 
     read_blocks(ptr, block_number, block_count);
+}
+
+
+void init_directory_table(struct FAT32DirectoryTable *dir_table, char *name, uint32_t parent_dir_cluster) {
+    // set all directory entries to be empty
+    for (int i = 0; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
+        strcpy(dir_table->table[i].name, "");
+        strcpy(dir_table->table[i].ext, "");
+        dir_table->table[i].cluster_high = 0;
+        dir_table->table[i].cluster_low = 0;
+        dir_table->table[i].filesize = 0;
+    }
+
+    // initialize the first directory entry with the parent directory
+    strncpy(dir_table->table[0].name, name, 8);
+    strncpy(dir_table->table[0].ext, "", 3);
+    dir_table->table[0].attribute = ATTR_SUBDIRECTORY;
+    dir_table->table[0].user_attribute = UATTR_NOT_EMPTY;
+    dir_table->table[0].cluster_high = (parent_dir_cluster >> 16) & 0xFFFF;
+    dir_table->table[0].cluster_low = parent_dir_cluster & 0xFFFF;
+    dir_table->table[0].filesize = 0;
 }
