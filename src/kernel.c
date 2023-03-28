@@ -7,6 +7,7 @@
 #include "lib-header/idt.h"
 #include "lib-header/interrupt.h"
 #include "lib-header/keyboard.h"
+#include "lib-header/fat32.h"
 
 void printString(char *string, uint8_t row, uint8_t col) {
     uint8_t i = 0;
@@ -65,6 +66,7 @@ void kernel_setup(void) {
     initialize_idt();
     framebuffer_clear();
     framebuffer_set_cursor(0, 0);
+    initialize_filesystem_fat32();
     while (TRUE) {
         keyboard_state_activate();
     }
