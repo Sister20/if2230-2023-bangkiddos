@@ -14,6 +14,9 @@
 
 #define KEYBOARD_BUFFER_SIZE   256
 
+#define LEFT_SHIFT_KEY 0x2A
+#define RIGHT_SHIFT_KEY 0x36
+
 /**
  * keyboard_scancode_1_to_ascii_map[256], Convert scancode values that correspond to ASCII printables
  * How to use this array: ascii_char = k[scancode]
