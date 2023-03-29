@@ -13,10 +13,6 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c)
     
     out(CURSOR_PORT_CMD, 14);
     out(CURSOR_PORT_DATA, (uint8_t) ((pos >> 8) & 0xFF));
-
-    // Display cursor character
-    uint16_t *location = (uint16_t *)(0xB8000 + 2 * pos);
-    *location = (' ' | 0x0F00);
 }
 
 void framebuffer_get_cursor(uint8_t *r, uint8_t *c)
@@ -59,5 +55,13 @@ void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg)
 void framebuffer_clear(void)
 {
     /* Implementation */
-    memset(MEMORY_FRAMEBUFFER, 0, 25 * 80 * 2);
+
+    // memset(MEMORY_FRAMEBUFFER, 0, 25 * 80 * 2);
+
+    /* agar sudah ter-set semua buffernya */
+    for (int i = 0; i < 25; i ++) {
+        for (int j = 0; j < 80; j ++) {
+            framebuffer_write(i, j, ' ', 0xF, 0x0);
+        }
+    }
 }
