@@ -105,3 +105,15 @@ void init_directory_table(struct FAT32DirectoryTable *dir_table, char *name, uin
     dir_table->table[0].cluster_low = parent_dir_cluster & 0xFFFF;
     dir_table->table[0].filesize = 0;
 }
+
+// * @return Error code: 0 success - 1 not a folder - 2 not found - -1 unknown
+
+int8_t read_directory(struct FAT32DriverRequest request) {
+
+}
+
+//  * @return Error code: 0 success - 1 not a file - 2 not enough buffer - 3 not found - -1 unknown
+
+// int8_t write(struct FAT32DriverRequest request);
+
+// int8_t delete(struct FAT32DriverRequest request);
