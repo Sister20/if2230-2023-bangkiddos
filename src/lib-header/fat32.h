@@ -243,4 +243,20 @@ int8_t write(struct FAT32DriverRequest request);
  */
 int8_t delete(struct FAT32DriverRequest request);
 
+/* Tambahan */
+/* Directory table search */
+int8_t dirtable_linear_search(uint32_t parent_cluster_number, struct FAT32DriverRequest entry);
+
+/* Implementasi strlen */
+int strlen(char *str);
+
+/* Directory validation */
+bool isDirectoryValid(uint32_t parent_cluster_number);
+
+/* Check that there are no duplicates */
+bool isFileOrFolderExists(uint32_t parent_cluster_number, struct FAT32DriverRequest file_entry);
+
+/* Add to directory table */
+void addToDirectory(uint32_t parent_cluster_number, struct FAT32DriverRequest entry, int16_t entry_cluster);
+
 #endif

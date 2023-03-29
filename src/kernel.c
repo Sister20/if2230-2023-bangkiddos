@@ -67,10 +67,7 @@ void kernel_setup(void) {
     framebuffer_clear();
     framebuffer_set_cursor(0, 0);
     initialize_filesystem_fat32();
-
-    // while(TRUE) {
-        keyboard_state_activate();
-    // }
+    keyboard_state_activate();
 
     struct ClusterBuffer cbuf[5];
     for (uint32_t i = 0; i < 5; i++)
@@ -86,8 +83,6 @@ void kernel_setup(void) {
     } ;
 
     write(request); // Create folder "ikanaide"
-
-    // framebuffer_write(p, 0, 'a', 0xF, 0x0);
     memcpy(request.name, "kano1\0\0\0", 8);
     write(request);  // Create folder "kano1"
     memcpy(request.name, "ikanaide", 8);
@@ -105,6 +100,4 @@ void kernel_setup(void) {
     read(request);   // Failed read due not enough buffer size
     request.buffer_size = 5*CLUSTER_SIZE;
     read(request);   // Success read on file "daijoubu"
-
-    while (TRUE);
 }

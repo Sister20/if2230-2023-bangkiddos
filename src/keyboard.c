@@ -51,6 +51,20 @@ bool is_keyboard_blocking(void){
     return keyboard_state.keyboard_input_on;
 }
 
+uint16_t lengthBuffer() {
+    uint16_t count = 0;
+
+    for (int i = 0; i < 256; i ++) {
+        if (keyboard_state.keyboard_buffer[i] != 0) {
+            count ++;
+        } else {
+            break;
+        }
+    }
+
+    return count;
+}
+
 void keyboard_isr(void){
     if (!keyboard_state.keyboard_input_on)
         keyboard_state.buffer_index = 0;
@@ -72,30 +86,19 @@ void keyboard_isr(void){
                 if (scancode == EXT_SCANCODE_LEFT) {
                     if (keyboard_state.buffer_index > 0) {
                         keyboard_state.buffer_index--;
-                        framebuffer_set_cursor(c_row, c_col - 1);
+
+                        if (c_row != 0 && c_col == 0) {
+                            framebuffer_set_cursor(c_row - 1, 79);
+                        } else {
+                            framebuffer_set_cursor(c_row, c_col - 1);
+                        }
+                    }
+                } else if (scancode == EXT_SCANCODE_RIGHT) {
+                    if (keyboard_state.buffer_index < lengthBuffer()) {
+                        keyboard_state.buffer_index++;
+                        framebuffer_set_cursor(c_row, c_col + 1);
                     }
                 }
-
-                // framebuffer_write(c_row, c_col, 'p', 0xF, 0x0);
-                // framebuffer_set_cursor(c_row, c_col + 1);
-                // switch(scancode) {
-                //     case EXT_SCANCODE_UP:
-
-                //         break;
-                //     case EXT_SCANCODE_DOWN:
-
-                //         break;
-                    
-                //     case EXT_SCANCODE_LEFT:
-                        // keyboard_state.buffer_index--;
-                        // framebuffer_set_cursor(c_row, c_col - 1);
-                //         break;
-
-                //     case EXT_SCANCODE_RIGHT:
-                //         keyboard_state.buffer_index++;
-                //         framebuffer_set_cursor(c_row, c_col + 1);
-                //         break;
-                // }
             } else {
                 if (scancode & 0x80) { // release interrupt
                     // check if the released key is the left or right Shift key
@@ -110,6 +113,7 @@ void keyboard_isr(void){
                 } else if (mapped_char == '\b' && keyboard_state.buffer_index > 0) {
                     // backspace
                     keyboard_state.buffer_index--;
+                    keyboard_state.keyboard_buffer[keyboard_state.buffer_index] = 0;
 
                     if (c_row != 0 && c_col == 0) {
                         framebuffer_set_cursor(c_row - 1, 79);
@@ -143,7 +147,7 @@ void keyboard_isr(void){
                                 mapped_char += 'a' - 'A'; // convert to lowercase
                             }
                         }
-
+                        
                         keyboard_state.keyboard_buffer[keyboard_state.buffer_index++] = mapped_char;
                         framebuffer_write(c_row, c_col, mapped_char, 0xF, 0x0);
                         framebuffer_set_cursor(c_row, c_col + 1);
