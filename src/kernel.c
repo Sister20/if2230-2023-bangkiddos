@@ -86,25 +86,25 @@ void kernel_setup(void) {
     } ;
 
     write(request); // Create folder "ikanaide"
+    // delete(request);
+    // // framebuffer_write(p, 0, 'a', 0xF, 0x0);
+    // memcpy(request.name, "kano1\0\0\0", 8);
+    // write(request);  // Create folder "kano1"
+    // memcpy(request.name, "ikanaide", 8);
+    // delete(request); // Delete first folder, thus creating hole in FS
 
-    // framebuffer_write(p, 0, 'a', 0xF, 0x0);
-    memcpy(request.name, "kano1\0\0\0", 8);
-    write(request);  // Create folder "kano1"
-    memcpy(request.name, "ikanaide", 8);
-    delete(request); // Delete first folder, thus creating hole in FS
+    // memcpy(request.name, "daijoubu", 8);
+    // request.buffer_size = 5*CLUSTER_SIZE;
+    // write(request);  // Create fragmented file "daijoubu"
 
-    memcpy(request.name, "daijoubu", 8);
-    request.buffer_size = 5*CLUSTER_SIZE;
-    write(request);  // Create fragmented file "daijoubu"
+    // struct ClusterBuffer readcbuf;
+    // read_clusters(&readcbuf, ROOT_CLUSTER_NUMBER+1, 1); 
+    // // If read properly, readcbuf should filled with 'a'
 
-    struct ClusterBuffer readcbuf;
-    read_clusters(&readcbuf, ROOT_CLUSTER_NUMBER+1, 1); 
-    // If read properly, readcbuf should filled with 'a'
-
-    request.buffer_size = CLUSTER_SIZE;
-    read(request);   // Failed read due not enough buffer size
-    request.buffer_size = 5*CLUSTER_SIZE;
-    read(request);   // Success read on file "daijoubu"
+    // request.buffer_size = CLUSTER_SIZE;
+    // read(request);   // Failed read due not enough buffer size
+    // request.buffer_size = 5*CLUSTER_SIZE;
+    // read(request);   // Success read on file "daijoubu"
 
     while (TRUE);
 }

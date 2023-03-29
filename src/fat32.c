@@ -204,47 +204,43 @@ int8_t delete(struct FAT32DriverRequest request) {
     if (foundIndex == -1) {
         return 1;
     } else if (foundIndex != 0) {
-
-        // Read directory table
-        read_clusters(&driver_state.dir_table_buf, request.parent_cluster_number, 1);
-
-        uint32_t theblock = foundIndex;
-
-        // Traverse until we found the end of file
-        while (driver_state.fat_table.cluster_map[theblock] != FAT32_FAT_END_OF_FILE) {
-            uint32_t oldblock = theblock;
-            theblock = driver_state.fat_table.cluster_map[theblock];
-            driver_state.fat_table.cluster_map[oldblock] = FAT32_FAT_EMPTY_ENTRY;
-        }
-
-        // Delete the end of file
-        driver_state.fat_table.cluster_map[theblock] = FAT32_FAT_EMPTY_ENTRY;
-
-        // Count number of entries
-        int entry_count = 0;
-        for (unsigned int i = 0; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
-            if (driver_state.dir_table_buf.table[i].name[0] == 0x00) {
+        // check the number of files in the directory
+        int numberOfFiles = 0;
+        for(int i = 1; i < 64; i++){
+            char* current_name = driver_state.dir_table_buf.table[i].name;
+            char *current_ext = driver_state.dir_table_buf.table[i].ext;
+            if(!memcmp(current_name, 0, 8)){
                 break;
             } else {
-                entry_count++;
+                numberOfFiles++;
             }
         }
 
-        // If there is only 1 entry and it is not root
-        if (entry_count == 1) {
-            if (memcmp("root", driver_state.dir_table_buf.table[0].name, 8) != 0) {
-                // overwrite with fat32 empty
-                memset(driver_state.dir_table_buf.table[0].name, 0, 8);
-                memset(driver_state.dir_table_buf.table[0].ext, 0, 3);
-                driver_state.dir_table_buf.table[0].cluster_high = 0;
-                driver_state.dir_table_buf.table[0].cluster_low = 0;
-                driver_state.dir_table_buf.table[0].filesize = 0;
-            }
+        if (numberOfFiles > 1) {
+            return 2;
         }
-        return 0; // Return success code
+
+        int32_t clusternumber = &driver_state.dir_table_buf.table[foundIndex].cluster_low;
+        
+        memset(&driver_state.dir_table_buf.table[foundIndex], 0, sizeof(struct FAT32DirectoryEntry));
+
+        int32_t cur_cluster = clusternumber;
+        int32_t cur_block = fat32_allocation_table.cluster_map[cur_cluster];
+        // process of deleting the files from allocation table
+        while (cur_block != FAT32_FAT_END_OF_FILE) {
+            memset(&fat32_allocation_table.cluster_map[cur_cluster], 0, sizeof(int32_t));
+            cur_cluster = cur_block;
+            cur_block = fat32_allocation_table.cluster_map[cur_cluster];
+        }
+        memset(&fat32_allocation_table.cluster_map[cur_cluster], 0, sizeof(int32_t));
+        write_clusters(&fat32_allocation_table, FAT_CLUSTER_NUMBER, 1);
+        write_clusters(&driver_state, request.parent_cluster_number, 1);
+        return 0;
     } else {
         return 2; // The index is located at index 0 in directorytable
     }
+
+    return -1;
 }
 
 int8_t write(struct FAT32DriverRequest request) {
