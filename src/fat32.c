@@ -124,6 +124,57 @@ int8_t read(struct FAT32DriverRequest request) {
     return 0; // Return success code
 }
 
+int8_t delete(struct FAT32DriverRequest request) {
+    // Search for the entry in the directory table
+    int8_t foundIndex = dirtable_linear_search(request.parent_cluster_number, request);
+    if (foundIndex == -1) {
+        return 1;
+    } else if (foundIndex != 0) {
+        // Read the directory table and file allocation table
+        struct FAT32DirectoryTable directory_parent;
+        read_clusters(&directory_parent, request.parent_cluster_number, 1);
+        struct FAT32FileAllocationTable fat;
+        read_clusters(&fat, FAT_CLUSTER_NUMBER, 1);
+
+        uint32_t theblock = foundIndex;
+        // traverse until we found the end of file
+        while (fat.cluster_map[theblock] != FAT32_FAT_END_OF_FILE) {
+            uint32_t oldblock = theblock;
+            theblock = fat.cluster_map[theblock];
+            fat.cluster_map[oldblock] = FAT32_FAT_EMPTY_ENTRY;
+        }
+        // delete the end of file
+        fat.cluster_map[theblock] = FAT32_FAT_EMPTY_ENTRY;
+
+        // count number of entries
+        int entry_count = 0;
+        for (unsigned int i = 0; i < CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry); i++) {
+            if (directory_parent.table[i].name[0] == 0x00) {
+                break;
+            } else {
+                entry_count++;
+            }
+        }
+
+        // if there is only 1 entry and it is not root
+        if (entry_count == 1) {
+            if (memcmp("root", directory_parent.table[0].name, 8) != 0) {
+                // overwrite with fat32 empty
+                memset(directory_parent.table[0].name, 0, 8);
+                memset(directory_parent.table[0].ext, 0, 3);
+                directory_parent.table[0].cluster_high = 0;
+                directory_parent.table[0].cluster_low = 0;
+                directory_parent.table[0].filesize = 0;
+            }
+        }
+        return 0; // success
+    } else {
+        return 2; // the index is located at index 0 in directorytable
+    }
+
+    return -1;
+}
+
 int my_strlen(char *str) {
 	int count = 0;
 
