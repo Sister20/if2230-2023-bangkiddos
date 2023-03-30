@@ -318,6 +318,7 @@ int8_t delete(struct FAT32DriverRequest request) {
         }
         memset(&driver_state.fat_table.cluster_map[cur_cluster], 0, sizeof(int32_t));
     }
+    
     struct ClusterBuffer temp = {0};
     write_clusters(temp.buf, i, 1);
     write_clusters(&fat, FAT_CLUSTER_NUMBER, 1);
