@@ -60,14 +60,14 @@ void amongus() {
 }
 
 void kernel_setup(void) {
-    /* Initialization */
     enter_protected_mode(&_gdt_gdtr);
     pic_remap();
     initialize_idt();
+    activate_keyboard_interrupt();
     framebuffer_clear();
     framebuffer_set_cursor(0, 0);
     initialize_filesystem_fat32();
-    // amongus();
+    keyboard_state_activate();
 
     struct ClusterBuffer cbuf[5];
     for (uint32_t i = 0; i < 5; i++)
@@ -82,31 +82,25 @@ void kernel_setup(void) {
         .buffer_size           = 0,
     } ;
 
-    write(request); // Create folder "ikanaide"
-    // memcpy(request.name, "kano1\0\0\0", 8);
-    // write(request); // Create folder "kano1"
-    // memcpy(request.name, "ikanaido", 8);
-    // memcpy(request.ext, "txt", 3);
-    // request.parent_cluster_number = 3;
-    // request.buffer_size = 1;
+    write(request);  // Create folder "ikanaide"
+    memcpy(request.name, "kano1\0\0\0", 8);
+    write(request);  // Create folder "kano1"
+    memcpy(request.name, "ikanaide", 8);
+    memcpy(request.ext, "\0\0\0", 3);
+    delete(request); // Delete first folder, thus creating hole in FS
 
-    // write(request);
-    // delete (request); // Delete first folder, thus creating hole in FS
+    memcpy(request.name, "daijoubu", 8);
+    request.buffer_size = 5*CLUSTER_SIZE;
+    write(request);  // Create fragmented file "daijoubu"
 
-    // memcpy(request.name, "daijoubu", 8);
-    // request.buffer_size = 5 * CLUSTER_SIZE;
-    // write(request); // Create fragmented file "daijoubu"
+    struct ClusterBuffer readcbuf;
+    read_clusters(&readcbuf, ROOT_CLUSTER_NUMBER+1, 1); 
+    // If read properly, readcbuf should filled with 'a'
 
-    // struct ClusterBuffer readcbuf;
-    // read_clusters(&readcbuf, ROOT_CLUSTER_NUMBER + 1, 1);
-    // // If read properly, readcbuf should filled with 'a'
+    request.buffer_size = CLUSTER_SIZE;
+    read(request);   // Failed read due not enough buffer size
+    request.buffer_size = 5*CLUSTER_SIZE;
+    read(request);   // Success read on file "daijoubu"
 
-    // request.buffer_size = CLUSTER_SIZE;
-    // read(request); // Failed read due not enough buffer size
-    // request.buffer_size = 5 * CLUSTER_SIZE;
-    // read(request); // Success read on file "daijoubu"
-
-    // while (TRUE) {
-    keyboard_state_activate();
-    // }
+    while (TRUE);
 }

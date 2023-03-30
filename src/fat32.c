@@ -251,48 +251,42 @@ int8_t write(struct FAT32DriverRequest request) {
 }
 
 int8_t delete(struct FAT32DriverRequest request) {
-    // Search for the entry in the directory table
-    int8_t foundIndex = dirtable_linear_search(request.parent_cluster_number, request);
-    if (foundIndex == -1) {
+    read_clusters(&driver_state.fat_table, FAT_CLUSTER_NUMBER, 1);
+    read_clusters(&driver_state.dir_table_buf, request.parent_cluster_number, 1);
+
+    if (!isDirectoryValid(request.parent_cluster_number) || !isFileOrFolderExists(request.parent_cluster_number, request)) {
         return 1;
-    } else if (foundIndex != 0) {
-        // check the number of files in the directory
-        int numberOfFiles = 0;
-        for(int i = 1; i < 64; i++){
-            char* current_name = driver_state.dir_table_buf.table[i].name;
-            // char *current_ext = driver_state.dir_table_buf.table[i].ext;
-            if(!memcmp(current_name, 0, 8)){
-                break;
-            } else {
-                numberOfFiles++;
-            }
-        }
-
-        if (numberOfFiles > 1) {
-            return 2;
-        }
-
-        int32_t clusternumber = driver_state.dir_table_buf.table[foundIndex].cluster_low;
-        
-        memset(&driver_state.dir_table_buf.table[foundIndex], 0, sizeof(struct FAT32DirectoryEntry));
-
-        int32_t cur_cluster = clusternumber;
-        int32_t cur_block = fat32_allocation_table.cluster_map[cur_cluster];
-        // process of deleting the files from allocation table
-        while (cur_block != FAT32_FAT_END_OF_FILE) {
-            memset(&fat32_allocation_table.cluster_map[cur_cluster], 0, sizeof(int32_t));
-            cur_cluster = cur_block;
-            cur_block = fat32_allocation_table.cluster_map[cur_cluster];
-        }
-        memset(&fat32_allocation_table.cluster_map[cur_cluster], 0, sizeof(int32_t));
-        write_clusters(&fat32_allocation_table, FAT_CLUSTER_NUMBER, 1);
-        write_clusters(&driver_state, request.parent_cluster_number, 1);
-        return 0;
-    } else {
-        return 2; // The index is located at index 0 in directorytable
     }
 
-    return -1;
+    if (request.buffer_size == 0) {
+        int16_t ind = dirtable_linear_search(request.parent_cluster_number, request);
+        int32_t cluster_number = driver_state.dir_table_buf.table[ind].cluster_low;
+
+        // check if the directory has files in it 
+        if (doesDirHasFiles(request.parent_cluster_number)) {
+            return 2;
+        }
+        
+        memset(&driver_state.dir_table_buf.table[ind], 0, sizeof(struct FAT32DirectoryEntry));
+        memset(&driver_state.fat_table.cluster_map[cluster_number], 0, sizeof(int32_t));
+    } else {
+        int16_t ind = dirtable_linear_search(request.parent_cluster_number, request);
+        int32_t cluster_number = driver_state.dir_table_buf.table[ind].cluster_low;
+        memset(&driver_state.dir_table_buf.table[ind], 0, sizeof(struct FAT32DirectoryEntry));
+
+        int32_t cur_cluster = cluster_number;
+        int32_t curr = driver_state.fat_table.cluster_map[cur_cluster];
+        while (curr != FAT32_FAT_END_OF_FILE) {
+            memset(&driver_state.fat_table.cluster_map[cluster_number], 0, sizeof(int32_t));
+            cur_cluster = curr;
+            curr = driver_state.fat_table.cluster_map[cur_cluster];
+        }
+        memset(&driver_state.fat_table.cluster_map[cluster_number], 0, sizeof(int32_t));
+    }
+
+    write_clusters(&driver_state.fat_table, FAT_CLUSTER_NUMBER, 1);
+    write_clusters(&driver_state.dir_table_buf, request.parent_cluster_number, 1);
+    return 0;
 }
 
 int strlen(char *str) {
@@ -416,4 +410,19 @@ void addToDirectory(uint32_t parent_cluster_number, struct FAT32DriverRequest en
     write_clusters(&driver_state.dir_table_buf, parent_cluster_number, 1);
 
     return;
+}
+
+bool doesDirHasFiles(uint32_t parent_cluster_number) {
+    // Read directory table
+    read_clusters(&driver_state.dir_table_buf, parent_cluster_number, 1);
+
+    // Iterate over each directory entry in the table
+    // root is always at 0
+    char* latest_name = driver_state.dir_table_buf.table[1].name;
+    char* latest_ext = driver_state.dir_table_buf.table[1].ext;
+    if (!memcmp(latest_name, 0,  8) &&  !memcmp(latest_ext, 0, 3)) {
+        return TRUE;
+    }
+
+    return FALSE;
 }
