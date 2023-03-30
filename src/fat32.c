@@ -311,8 +311,6 @@ int8_t delete(struct FAT32DriverRequest request) {
 
         i = cluster_number;
 
-        i = cluster_number;
-
         int32_t cur_cluster = cluster_number;
         int32_t curr = fat.cluster_map[cur_cluster];
         // delete all the files until it reaches the end of file
@@ -324,6 +322,7 @@ int8_t delete(struct FAT32DriverRequest request) {
         // delete the end of file
         memset(&fat.cluster_map[cur_cluster], 0, sizeof(int32_t));
     }
+    
     struct ClusterBuffer temp = {0};
     write_clusters(temp.buf, i, 1);
     write_clusters(&fat, FAT_CLUSTER_NUMBER, 1);

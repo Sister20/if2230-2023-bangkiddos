@@ -112,8 +112,10 @@ void processCommand(uint8_t row) {
             framebuffer_set_cursor(row + 1, 3);
         }
     } else {
-        printString(command, row + 2 , 3);
-        printString(" is not recognized as an internal command", row + 2, lengthBuffer() + 3);
+        printString("\'", row + 2, 3);
+        printString(command, row + 2 , 4);
+        printString("\'", row + 2, lengthBuffer() + 4);
+        printString(" is not recognized as an internal command", row + 2, lengthBuffer() + 5);
 
         if (row + 4 >= 25) {
             framebuffer_clear();
