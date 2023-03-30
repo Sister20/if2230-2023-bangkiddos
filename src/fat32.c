@@ -1,7 +1,7 @@
 #include "lib-header/stdtype.h"
 #include "lib-header/fat32.h"
 #include "lib-header/stdmem.h"
-#include "lib-header/interrupt.h"
+#include "lib-header/cmos.h"
 
 const uint8_t fs_signature[BLOCK_SIZE] = {
     'C', 'o', 'u', 'r', 's', 'e', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',  ' ',
@@ -46,17 +46,20 @@ void init_directory_table(struct FAT32DirectoryTable *dir_table, char *name, uin
     for (int i = 0; i < strlen(name) && i < 8; i++) {
         dir_table->table[0].name[i] = name[i];
     }
-    // for (int i = strlen(name); i < 8; i++) {
-    //     dir_table->table[0].name[i] = ' ';
-    // }
-    // for (int i = 0; i < 3; i++) {
-    //     dir_table->table[0].ext[i] = ' ';
-    // }
+    
     dir_table->table[0].attribute = ATTR_SUBDIRECTORY;
     dir_table->table[0].user_attribute = UATTR_NOT_EMPTY;
     dir_table->table[0].cluster_high = (parent_dir_cluster >> 16) & 0xFFFF;
     dir_table->table[0].cluster_low = parent_dir_cluster & 0xFFFF;
     dir_table->table[0].filesize = 0;
+    dir_table->table[0].undelete = 0;
+
+    // cmos
+    struct time t;
+    cmos_read_rtc(&t);
+    dir_table->table[0].create_time = t.hour << 8 | t.minute;
+    dir_table->table[0].create_date = t.year << 9 | t.month << 5 | t.day;
+    dir_table->table[0].access_date = t.year << 9 | t.month << 5 | t.day;
 }
 
 bool is_empty_storage(void) {
@@ -123,6 +126,11 @@ int8_t read_directory(struct FAT32DriverRequest request) {
     // combines the 16-bit values of entry.cluster_high and entry.cluster_low into a single 32-bit integer value
     int32_t entry_cluster = entry.cluster_high << 16 | entry.cluster_low;
 
+    // cmos
+    struct time t;
+    cmos_read_rtc(&t);
+    entry.access_date = t.year << 9 | t.month << 5 | t.day;
+
     read_clusters(request.buf, entry_cluster, 1);
 
     return 0; // Return success code
@@ -162,6 +170,11 @@ int8_t read(struct FAT32DriverRequest request) {
     int32_t current_cluster = entry_cluster;
     int16_t cluster_count = 0;
     int32_t next_cluster;
+
+    // cmos
+    struct time t;
+    cmos_read_rtc(&t);
+    entry.access_date = t.year << 9 | t.month << 5 | t.day;
 
     // loop until eof
     do {
@@ -221,6 +234,14 @@ int8_t write(struct FAT32DriverRequest request) {
             i_before = i;
             struct FAT32DirectoryTable temp = {0};
             init_directory_table(&temp, request.name, request.parent_cluster_number);
+
+            // cmos
+            struct time t;
+            cmos_read_rtc(&t);
+            temp.table->create_time = t.hour << 8 | t.minute;
+            temp.table->create_date = t.year << 9 | t.month << 5 | t.day;
+            temp.table->access_date = t.year << 9 | t.month << 5 | t.day;
+
             write_clusters(&temp, i, 1);
             break;
         } else {
@@ -256,12 +277,17 @@ int8_t write(struct FAT32DriverRequest request) {
 }
 
 int8_t delete(struct FAT32DriverRequest request) {
-    read_clusters(&driver_state.fat_table, FAT_CLUSTER_NUMBER, 1);
-    read_clusters(&driver_state.dir_table_buf, request.parent_cluster_number, 1);
+    struct FAT32FileAllocationTable fat = {0};
+    read_clusters(&fat, FAT_CLUSTER_NUMBER, 1);
+
+    struct FAT32DirectoryTable dir = {0};
+    read_clusters(&dir, request.parent_cluster_number, 1);
 
     if (!isDirectoryValid(request.parent_cluster_number) || !isFileOrFolderExists(request.parent_cluster_number, request)) {
         return 1;
     }
+
+    int32_t i = 0;
 
     if (request.buffer_size == 0) {
         int16_t ind = dirtable_linear_search(request.parent_cluster_number, request);
@@ -272,12 +298,16 @@ int8_t delete(struct FAT32DriverRequest request) {
             return 2;
         }
         
-        memset(&driver_state.dir_table_buf.table[ind], 0, sizeof(struct FAT32DirectoryEntry));
-        memset(&driver_state.fat_table.cluster_map[cluster_number], 0, sizeof(int32_t));
+        i = cluster_number;
+
+        memset(&dir.table[ind], 0, sizeof(struct FAT32DirectoryEntry));
+        memset(&fat.cluster_map[cluster_number], 0x0, sizeof(int32_t));
     } else {
         int16_t ind = dirtable_linear_search(request.parent_cluster_number, request);
         int32_t cluster_number = driver_state.dir_table_buf.table[ind].cluster_low;
         memset(&driver_state.dir_table_buf.table[ind], 0, sizeof(struct FAT32DirectoryEntry));
+
+        i = cluster_number;
 
         int32_t cur_cluster = cluster_number;
         int32_t curr = driver_state.fat_table.cluster_map[cur_cluster];
@@ -288,10 +318,14 @@ int8_t delete(struct FAT32DriverRequest request) {
         }
         memset(&driver_state.fat_table.cluster_map[cur_cluster], 0, sizeof(int32_t));
     }
+    struct ClusterBuffer temp = {0};
+    write_clusters(temp.buf, i, 1);
+    write_clusters(&fat, FAT_CLUSTER_NUMBER, 1);
+    write_clusters(&dir, request.parent_cluster_number, 1);
 
-    write_clusters(&driver_state.fat_table, FAT_CLUSTER_NUMBER, 1);
-    write_clusters(&driver_state.dir_table_buf, request.parent_cluster_number, 1);
     return 0;
+
+    return -1;
 }
 
 int strlen(char *str) {
@@ -395,14 +429,18 @@ void addToDirectory(uint32_t parent_cluster_number, struct FAT32DriverRequest en
             if(entry.buffer_size != 0) {
                 memcpy(driver_state.dir_table_buf.table[i].ext, entry.ext, 3);
             }
-
-            driver_state.dir_table_buf.table[i].access_date = 0;
             
             driver_state.dir_table_buf.table[i].cluster_high = 0; 
-            driver_state.dir_table_buf.table[i].cluster_low = entry_cluster; 
-            driver_state.dir_table_buf.table[i].create_date = 0; 
-            driver_state.dir_table_buf.table[i].create_time = 0; 
+            driver_state.dir_table_buf.table[i].cluster_low = entry_cluster;
             
+            // cmos
+            struct time t;
+            cmos_read_rtc(&t);
+
+            driver_state.dir_table_buf.table[i].create_time = t.hour << 8 | t.minute;
+            driver_state.dir_table_buf.table[i].create_date = t.year << 9 | t.month << 5 | t.day;
+            driver_state.dir_table_buf.table[i].access_date = t.year << 9 | t.month << 5 | t.day;
+
             memcpy(driver_state.dir_table_buf.table[i].name,entry.name,8); 
             driver_state.dir_table_buf.table[i].filesize = entry.buffer_size; 
             driver_state.dir_table_buf.table[i].modified_date = 0; 
@@ -419,7 +457,7 @@ void addToDirectory(uint32_t parent_cluster_number, struct FAT32DriverRequest en
 
 bool doesDirHasFiles(uint32_t parent_cluster_number) {
     // Read directory table
-    struct FAT32DirectoryTable dir_cur;
+    struct FAT32DirectoryTable dir_cur = {0};
     read_clusters(&dir_cur, parent_cluster_number, 1);
 
     // Iterate over each directory entry in the table
