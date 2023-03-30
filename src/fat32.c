@@ -311,8 +311,6 @@ int8_t delete(struct FAT32DriverRequest request) {
 
         i = cluster_number;
 
-        i = cluster_number;
-
         int32_t cur_cluster = cluster_number;
         int32_t curr = fat.cluster_map[cur_cluster];
         // delete all the files until it reaches the end of file
