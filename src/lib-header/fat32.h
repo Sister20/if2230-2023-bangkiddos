@@ -256,6 +256,9 @@ bool isDirectoryValid(uint32_t parent_cluster_number);
 /* Check that there are no duplicates */
 bool isFileOrFolderExists(uint32_t parent_cluster_number, struct FAT32DriverRequest file_entry);
 
+/* Check if the directory files */
+bool doesDirHasFiles(uint32_t parent_cluster_number);
+
 /* Add to directory table */
 void addToDirectory(uint32_t parent_cluster_number, struct FAT32DriverRequest entry, int16_t entry_cluster);
 
