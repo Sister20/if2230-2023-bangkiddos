@@ -283,18 +283,20 @@ int8_t delete(struct FAT32DriverRequest request) {
     struct FAT32DirectoryTable dir = {0};
     read_clusters(&dir, request.parent_cluster_number, 1);
 
+    // check if the directory is valid or not, and if it exists or not
     if (!isDirectoryValid(request.parent_cluster_number) || !isFileOrFolderExists(request.parent_cluster_number, request)) {
-        return 1;
+        return 1; // not found
     }
 
     int32_t i = 0;
 
+    // if it's a directory
     if (request.buffer_size == 0) {
         int16_t ind = dirtable_linear_search(request.parent_cluster_number, request);
         int32_t cluster_number = driver_state.dir_table_buf.table[ind].cluster_low;
 
         // check if the directory has files in it 
-        if (doesDirHasFiles(request.parent_cluster_number)) {
+        if (doesDirHasFiles(cluster_number)) {
             return 2;
         }
         
@@ -302,21 +304,25 @@ int8_t delete(struct FAT32DriverRequest request) {
 
         memset(&dir.table[ind], 0, sizeof(struct FAT32DirectoryEntry));
         memset(&fat.cluster_map[cluster_number], 0x0, sizeof(int32_t));
-    } else {
+    } else { // if it's a file
         int16_t ind = dirtable_linear_search(request.parent_cluster_number, request);
-        int32_t cluster_number = driver_state.dir_table_buf.table[ind].cluster_low;
-        memset(&driver_state.dir_table_buf.table[ind], 0, sizeof(struct FAT32DirectoryEntry));
+        int32_t cluster_number = dir.table[ind].cluster_low;
+        memset(&dir.table[ind], 0, sizeof(struct FAT32DirectoryEntry));
+
+        i = cluster_number;
 
         i = cluster_number;
 
         int32_t cur_cluster = cluster_number;
-        int32_t curr = driver_state.fat_table.cluster_map[cur_cluster];
+        int32_t curr = fat.cluster_map[cur_cluster];
+        // delete all the files until it reaches the end of file
         while (curr != FAT32_FAT_END_OF_FILE) {
-            memset(&driver_state.fat_table.cluster_map[cur_cluster], 0, sizeof(int32_t));
+            memset(&fat.cluster_map[cur_cluster], 0, sizeof(int32_t));
             cur_cluster = curr;
-            curr = driver_state.fat_table.cluster_map[cur_cluster];
+            curr = fat.cluster_map[cur_cluster];
         }
-        memset(&driver_state.fat_table.cluster_map[cur_cluster], 0, sizeof(int32_t));
+        // delete the end of file
+        memset(&fat.cluster_map[cur_cluster], 0, sizeof(int32_t));
     }
     
     struct ClusterBuffer temp = {0};
@@ -324,9 +330,9 @@ int8_t delete(struct FAT32DriverRequest request) {
     write_clusters(&fat, FAT_CLUSTER_NUMBER, 1);
     write_clusters(&dir, request.parent_cluster_number, 1);
 
-    return 0;
+    return 0; // success
 
-    return -1;
+    return -1; // unknown
 }
 
 int strlen(char *str) {
