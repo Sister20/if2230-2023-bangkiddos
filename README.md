@@ -1,5 +1,7 @@
 # bangkiddOS
 
+![Welcome to BangkiddOS!](osos.gif)
+
 ## Made by
 
 | Name                           |   Nim    |
