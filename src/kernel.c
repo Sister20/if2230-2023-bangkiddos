@@ -60,17 +60,26 @@ void kernel_setup(void) {
     write(request); // Create folder "ikanaide"
     memcpy(request.name, "kano1\0\0\0", 8);
     write(request); // Create folder "kano1"
-    memcpy(request.name, "ikanaide", 8);
-    memcpy(request.ext, "\0\0\0", 3);
-    delete(request); // Delete first folder, thus creating hole in FS
 
-    // ini buat yang file di dalam folder
+    // // ini buat yang file di dalam folder
     // memcpy(request.name, "ikanaido", 8);
     // memcpy(request.ext, "txt", 3);
     // request.parent_cluster_number = 3;
     // request.buffer_size = 1;
 
     // write(request);
+
+    memcpy(request.name, "ikanaide", 8);
+    memcpy(request.ext, "\0\0\0", 3);
+
+    delete(request); // Delete first folder, thus creating hole in FS
+
+    memcpy(request.name, "daijoubu", 8);
+    request.parent_cluster_number = ROOT_CLUSTER_NUMBER;
+    request.buffer_size = 0;
+    memcpy(request.ext, "uwu", 3);
+    request.buffer_size = 5 * CLUSTER_SIZE;
+    write(request); // Create fragmented file "daijoubu"
 
     struct ClusterBuffer readcbuf;
     read_clusters(&readcbuf, ROOT_CLUSTER_NUMBER+1, 1); 
