@@ -9,32 +9,6 @@
 #include "lib-header/keyboard.h"
 #include "lib-header/fat32.h"
 
-void printString(char *string, uint8_t row, uint8_t col) {
-    uint8_t i = 0;
-    char c = string[i];
-
-    // Bit    7 6 5 4 3 2 1 0
-    // Data   R R R G G G B B
-
-    while (c != '\0')
-    {
-        framebuffer_write(row, col + i, c, 0xF, 0x0);
-        i++;
-        c = string[i];
-    }
-}
-
-void printBlock(uint8_t row, uint8_t col, uint8_t n, uint8_t color)
-{
-    uint8_t i = col;
-    uint8_t count = 0;
-
-    while (count < n) {
-        framebuffer_write(row, i + count, ' ', 0xF, color);
-        count ++;
-    }
-}
-
 void amongus() {
     printString("  _", 5, 20);
     printString(" | |", 6, 20);
@@ -65,9 +39,10 @@ void kernel_setup(void) {
     pic_remap();
     initialize_idt();
     framebuffer_clear();
-    framebuffer_set_cursor(0, 0);
+    framebuffer_write(1, 1, '>', 0xF, 0x0);
+    framebuffer_set_cursor(1, 3);
     initialize_filesystem_fat32();
-    // amongus();
+    keyboard_state_activate();
 
     struct ClusterBuffer cbuf[5];
     for (uint32_t i = 0; i < 5; i++)
@@ -83,14 +58,14 @@ void kernel_setup(void) {
     } ;
 
     write(request); // Create folder "ikanaide"
-    // memcpy(request.name, "kano1\0\0\0", 8);
-    // write(request); // Create folder "kano1"
-    // memcpy(request.name, "ikanaido", 8);
-    // memcpy(request.ext, "txt", 3);
-    // request.parent_cluster_number = 3;
-    // request.buffer_size = 1;
+    memcpy(request.name, "kano1\0\0\0", 8);
+    write(request); // Create folder "kano1"
+    memcpy(request.name, "ikanaido", 8);
+    memcpy(request.ext, "txt", 3);
+    request.parent_cluster_number = 3;
+    request.buffer_size = 1;
 
-    // write(request);
+    write(request);
     // delete (request); // Delete first folder, thus creating hole in FS
 
     // memcpy(request.name, "daijoubu", 8);
@@ -106,7 +81,5 @@ void kernel_setup(void) {
     // request.buffer_size = 5 * CLUSTER_SIZE;
     // read(request); // Success read on file "daijoubu"
 
-    // while (TRUE) {
-    keyboard_state_activate();
-    // }
+    while (TRUE);
 }

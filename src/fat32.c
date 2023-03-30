@@ -1,6 +1,7 @@
 #include "lib-header/stdtype.h"
 #include "lib-header/fat32.h"
 #include "lib-header/stdmem.h"
+#include "lib-header/interrupt.h"
 
 const uint8_t fs_signature[BLOCK_SIZE] = {
     'C', 'o', 'u', 'r', 's', 'e', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',  ' ',
@@ -202,6 +203,10 @@ int8_t write(struct FAT32DriverRequest request) {
     int16_t i_before = 0;
     int16_t i_start = -1;
 
+    // 0, 1, 2 defined, so start at 3
+    // 0 cluster
+    // 1 cluster
+    // 2 root
     for (int i = 3; i < 512; i ++) {
         if (driver_state.fat_table.cluster_map[i] != 0 || driver_state.fat_table.cluster_map[i] == FAT32_FAT_END_OF_FILE) {
             continue;
@@ -247,7 +252,7 @@ int8_t write(struct FAT32DriverRequest request) {
 
     return 0;
     
-    // return -1; // ??
+    return -1;
 }
 
 int8_t delete(struct FAT32DriverRequest request) {

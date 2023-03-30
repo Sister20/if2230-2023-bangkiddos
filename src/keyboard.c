@@ -65,6 +65,68 @@ uint16_t lengthBuffer() {
     return count;
 }
 
+void clearBuffer() {
+    for (int i = 0; i < 256; i ++) {
+        keyboard_state.keyboard_buffer[i] = 0;
+    }
+
+    keyboard_state.buffer_index = 0;
+    return;
+}
+
+int strcmp(const char* s1, const char* s2) {
+    int i = 0;
+    while (s1[i] != '\0' && s2[i] != '\0') {
+        if (s1[i] != s2[i]) {
+            return (s1[i] < s2[i]) ? -1 : 1;
+        }
+        i++;
+    }
+    return (s1[i] == '\0' && s2[i] == '\0') ? 0 : (s1[i] < s2[i] ? -1 : 1);
+
+    // 0 if equal
+}
+
+void processCommand(uint8_t row) {
+    char command[lengthBuffer() + 1];
+
+    for (int i = 0; i < lengthBuffer(); i ++) {
+        command[i] = keyboard_state.keyboard_buffer[i];
+    }
+
+    command[lengthBuffer()] = '\0';
+
+    if (strcmp(command, "clear") == 0) {
+        framebuffer_clear();
+
+        framebuffer_write(1, 1, '>', 0xF, 0x0);
+        framebuffer_set_cursor(1, 3);
+    } else if (strcmp(command, "") == 0) {
+        if (row + 1 >= 25) {
+            framebuffer_clear();
+
+            framebuffer_write(1, 1, '>', 0xF, 0x0);
+            framebuffer_set_cursor(1, 3);
+        } else {
+            framebuffer_write(row + 1, 1, '>', 0xF, 0x0);
+            framebuffer_set_cursor(row + 1, 3);
+        }
+    } else {
+        printString(command, row + 2 , 3);
+        printString(" is not recognized as an internal command", row + 2, lengthBuffer() + 3);
+
+        if (row + 4 >= 25) {
+            framebuffer_clear();
+
+            framebuffer_write(1, 1, '>', 0xF, 0x0);
+            framebuffer_set_cursor(1, 3);
+        } else {
+            framebuffer_write(row + 4, 1, '>', 0xF, 0x0);
+            framebuffer_set_cursor(row + 4, 3);
+        }
+    }
+}
+
 void keyboard_isr(void){
     if (!keyboard_state.keyboard_input_on)
         keyboard_state.buffer_index = 0;
@@ -76,7 +138,6 @@ void keyboard_isr(void){
         if (scancode == EXTENDED_SCANCODE_BYTE) {
             keyboard_state.read_extended_mode = TRUE;
         } else {
-
             char mapped_char = keyboard_scancode_1_to_ascii_map[scancode];
 
             if (keyboard_state.read_extended_mode) {
@@ -125,15 +186,15 @@ void keyboard_isr(void){
                 } else if (mapped_char == '\b' && keyboard_state.buffer_index == 0) {
                     // do nothing if backspace is pressed but there is no character to delete.
                 } else if (mapped_char == '\n') {
-                    keyboard_state.keyboard_buffer[keyboard_state.buffer_index++] = '\0';
-                    framebuffer_set_cursor(c_row + 1, 0);
-                    
+                    processCommand(c_row);
+                    clearBuffer();
+
                     /**
                      * buffer is still available at this point
                     */
                     
                     // Reading stops when enter is pressed.
-                    keyboard_state_deactivate();
+                    // keyboard_state_deactivate();
                 } else {
                     // handle uppercase letters for Shift and Capslock
 

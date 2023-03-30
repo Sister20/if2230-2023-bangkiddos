@@ -65,3 +65,28 @@ void framebuffer_clear(void)
         }
     }
 }
+
+void printString(char *string, uint8_t row, uint8_t col) {
+    uint8_t i = 0;
+    char c = string[i];
+
+    // Bit    7 6 5 4 3 2 1 0
+    // Data   R R R G G G B B
+
+    while (c != '\0')
+    {
+        framebuffer_write(row, col + i, c, 0xF, 0x0);
+        i++;
+        c = string[i];
+    }
+}
+
+void printBlock(uint8_t row, uint8_t col, uint8_t n, uint8_t color) {
+    uint8_t i = col;
+    uint8_t count = 0;
+
+    while (count < n) {
+        framebuffer_write(row, i + count, ' ', 0xF, color);
+        count ++;
+    }
+}
