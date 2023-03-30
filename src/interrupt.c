@@ -1,6 +1,7 @@
 #include "lib-header/interrupt.h"
 #include "lib-header/portio.h"
 #include "lib-header/keyboard.h"
+#include "lib-header/framebuffer.h"
 
 /** 
  * Note for others :
