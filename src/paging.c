@@ -34,6 +34,7 @@ int8_t allocate_single_user_page_frame(void *virtual_addr) {
     uint32_t last_physical_addr = (uint32_t) page_driver_state.last_available_physical_addr;
 
     // TODO : Allocate Page Directory Entry with user privilege
+    
     // Allocate a new physical page frame
     void *new_page_frame = (void *)last_physical_addr;
     page_driver_state.last_available_physical_addr += PAGE_FRAME_SIZE;
