@@ -37,7 +37,7 @@ void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg)
     volatile uint16_t * location;
     volatile uint16_t * fb;
 
-    fb = (volatile uint16_t*) 0xb8000;
+    fb = (volatile uint16_t*) 0xC00B8000;
 
     /*
         Bit:     | 15 14 13 12 11 10 9 8 | 7 6 5 4 | 3 2 1 0 |
