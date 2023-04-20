@@ -25,7 +25,7 @@ run: all
 all: build
 build: iso
 clean:
-	rm -rf *.o *.iso $(OUTPUT_FOLDER)
+	find $(OUTPUT_FOLDER)/ -type f -not -name '.gitignore' -delete
 
 kernel:
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel_loader.s -o $(OUTPUT_FOLDER)/kernel_loader.o
