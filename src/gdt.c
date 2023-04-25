@@ -11,71 +11,110 @@ struct GlobalDescriptorTable global_descriptor_table = {
     .table = {
         {
             /* Implementation */
-            .segment_low = 0,
-            .segment_high = 0,
+            .segment_low       = 0,
+            .segment_high      = 0,
 
-            .base_low = 0,
-            .base_mid = 0,
-            .base_high = 0,
+            .base_low          = 0,
+            .base_mid          = 0,
+            .base_high         = 0,
 
-            .type_bit = 0,
+            .type_bit          = 0,
 
-            .non_system = 0,
-            .dpl = 0,
-            .present_bit = 0,
-            .long_mode = 0,
-            .big = 0,
-            .gran = 0
+            .non_system        = 0,
+            .dpl               = 0,
+            .present_bit       = 0,
+            .long_mode         = 0,
+            .big               = 0,
+            .gran              = 0
         },
         {
             /* Implementation */
             .segment_low = 0xFFFF,
             .segment_high = 0xF,
 
-            .base_low = 0,
-            .base_mid = 0,
-            .base_high = 0,
+            .base_low          = 0,
+            .base_mid          = 0,
+            .base_high         = 0,
 
-            .type_bit = 0xA,
+            .type_bit          = 0xA,
 
-            .non_system = 1,
-            .dpl = 0,
-            .present_bit = 1,
-            .long_mode = 0,
-            .big = 1,
-            .gran = 1
+            .non_system        = 1,
+            .dpl               = 0,
+            .present_bit       = 1,
+            .long_mode         = 0,
+            .big               = 1,
+            .gran              = 1
         },
         {
             /* Implementation */
-            .segment_low = 0xFFFF,
-            .segment_high = 0xF,
+            .segment_low       = 0xFFFF,
+            .segment_high      = 0xF,
 
-            .base_low = 0,
-            .base_mid = 0,
-            .base_high = 0,
+            .base_low          = 0,
+            .base_mid          = 0,
+            .base_high         = 0,
 
-            .type_bit = 0x2,
+            .type_bit          = 0x2,
 
-            .non_system = 1,
-            .dpl = 0,
-            .present_bit = 1,
-            .long_mode = 0,
-            .big = 1,
-            .gran = 1
+            .non_system        = 1,
+            .dpl               = 0,
+            .present_bit       = 1,
+            .long_mode         = 0,
+            .big               = 1,
+            .gran              = 1
+        },
+        {/* TODO: User   Code Descriptor */
+            /* Implementation */
+            .segment_low       = 0xFFFF,
+            .segment_high      = 0xF,
+
+            .base_low          = 0,
+            .base_mid          = 0,
+            .base_high         = 0,
+
+            .type_bit          = 0xA,
+
+            .non_system        = 1,
+            .dpl               = 0x3,
+            .present_bit       = 1,
+            .long_mode         = 0,
+            .big               = 1,
+            .gran              = 1
+        },
+        {/* TODO: User   Data Descriptor */
+            /* Implementation */
+            .segment_low       = 0xFFFF,
+            .segment_high      = 0xF,
+
+            .base_low          = 0,
+            .base_mid          = 0,
+            .base_high         = 0,
+
+            .type_bit          = 0x2,
+
+            .non_system        = 1,
+            .dpl               = 0x3,
+            .present_bit       = 1,
+            .long_mode         = 0,
+            .big               = 1,
+            .gran              = 1
         },
         {
             .segment_high      = (sizeof(struct TSSEntry) & (0xF << 16)) >> 16,
             .segment_low       = sizeof(struct TSSEntry),
+
             .base_high         = 0,
             .base_mid          = 0,
             .base_low          = 0,
-            .non_system        = 0,    // S bit
+
             .type_bit          = 0x9,
-            .privilege         = 0,    // DPL
-            .valid_bit         = 1,    // P bit
-            .opr_32_bit        = 1,    // D/B bit
+            
+            .non_system        = 0,    // S bit
+            .dpl               = 0,    // DPL
+            .present_bit       = 1,    // P bit
+            .big               = 1,    // D/B bit
             .long_mode         = 0,    // L bit
-            .granularity       = 0,    // G bit
+            .gran              = 0,    // G bit
         }}};
 
 /**

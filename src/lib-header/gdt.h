@@ -49,11 +49,6 @@ struct SegmentDescriptor {
     uint8_t big          : 1;
     uint8_t gran         : 1;
 
-    uint8_t privilege       ;
-    uint8_t valid_bit       ;
-    uint8_t opr_32_bit      ;
-    uint8_t granularity     ;
-
     uint8_t               base_high;
 
 } __attribute__((packed));
