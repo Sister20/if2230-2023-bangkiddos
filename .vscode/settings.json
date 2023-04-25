@@ -3,6 +3,7 @@
     "files.associations": {
         "idt.h": "c",
         "interrupt.h": "c",
-        "stdtype.h": "c"
+        "stdtype.h": "c",
+        "fat32.h": "c"
     },
 }
