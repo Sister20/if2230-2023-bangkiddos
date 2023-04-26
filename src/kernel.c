@@ -121,7 +121,10 @@ void kernel_setup(void) {
 
     // Set TSS $esp pointer and jump into shell 
     set_tss_kernel_current_stack();
-    kernel_execute_user_program((uint8_t *) 0);
+    printString("Jumping to shell...", 0x0, 0x0);
+    framebuffer_set_cursor(1, 0);
+    // execute shell
+    kernel_execute_user_program((uint8_t*) 0x0);
 
     while (TRUE);
 }

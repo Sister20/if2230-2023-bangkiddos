@@ -56,13 +56,13 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
     } else if (cpu.eax == 4) {
         keyboard_state_activate();
         __asm__("sti"); // Due IRQ is disabled when main_interrupt_handler() called
-        while (is_keyboard_blocking());
-        char buf[KEYBOARD_BUFFER_SIZE];
-        get_keyboard_buffer(buf);
-        memcpy((char *) cpu.ebx, buf, cpu.ecx);
+        // while (is_keyboard_blocking());
+        // char buf[KEYBOARD_BUFFER_SIZE];
+        // get_keyboard_buffer(buf);
+        // memcpy((char *) cpu.ebx, buf, cpu.ecx);
     } else if (cpu.eax == 5) {
         // puts((char *) cpu.ebx, cpu.ecx, cpu.edx); // Modified puts() on kernel side
-        printString("Test", 2, 1);
+        // printString("Test", 2, 1);
     }
 }
 
