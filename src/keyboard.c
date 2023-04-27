@@ -55,80 +55,79 @@ struct KeyboardDriverState get_keyboard_state(void){
     return keyboard_state;
 }
 
+void reset_scancode(void){
+    keyboard_state.last_scancode = 0;
+}
+
+void reset_last_char(void){
+    keyboard_state.last_char = 0;
+}
+
 bool is_keyboard_blocking(void){
     return keyboard_state.keyboard_input_on;
 }
 
-uint16_t lengthBuffer() {
-    uint16_t count = 0;
-
-    for (int i = 0; i < 256; i ++) {
-        if (keyboard_state.keyboard_buffer[i] != 0) {
-            count ++;
-        } else {
-            break;
-        }
-    }
-
-    return count;
-}
-
-void clearBuffer() {
+void clear_buffer() {
     for (int i = 0; i < 256; i ++) {
         keyboard_state.keyboard_buffer[i] = 0;
     }
 
     keyboard_state.buffer_index = 0;
-    return;
+    keyboard_state.buffer_length = 0;
+    keyboard_state.last_char = 0;
+    keyboard_state.last_scancode = 0;
 }
 
-void processCommand(uint8_t row) {
-    char command[lengthBuffer() + 1];
+// @deprecated, handled in user program
+// void processCommand(uint8_t row) {
+    // char command[lengthBuffer() + 1];
 
-    for (int i = 0; i < lengthBuffer(); i ++) {
-        command[i] = keyboard_state.keyboard_buffer[i];
-    }
+    // for (int i = 0; i < lengthBuffer(); i ++) {
+    //     command[i] = keyboard_state.keyboard_buffer[i];
+    // }
 
-    command[lengthBuffer()] = '\0';
+    // command[lengthBuffer()] = '\0';
 
-    if (strcmp(command, "clear") == 0) {
-        framebuffer_clear();
+    // if (strcmp(command, "clear") == 0) {
+    //     framebuffer_clear();
 
-        framebuffer_write(1, 1, '>', 0xF, 0x0);
-        framebuffer_set_cursor(1, 3);
-    } else if (strcmp(command, "") == 0) {
-        if (row + 1 >= 25) {
-            framebuffer_clear();
+    //     framebuffer_write(1, 1, '>', 0xF, 0x0);
+    //     framebuffer_set_cursor(1, 3);
+    // } else if (strcmp(command, "") == 0) {
+    //     if (row + 1 >= 25) {
+    //         framebuffer_clear();
 
-            framebuffer_write(1, 1, '>', 0xF, 0x0);
-            framebuffer_set_cursor(1, 3);
-        } else {
-            framebuffer_write(row + 1, 1, '>', 0xF, 0x0);
-            framebuffer_set_cursor(row + 1, 3);
-        }
-    } else {
-        // printString("\'", row + 2, 3);
-        // printString(command, row + 2 , 4);
-        // printString("\'", row + 2, lengthBuffer() + 4);
-        // printString(" is not recognized as an internal command", row + 2, lengthBuffer() + 5);
+    //         framebuffer_write(1, 1, '>', 0xF, 0x0);
+    //         framebuffer_set_cursor(1, 3);
+    //     } else {
+    //         framebuffer_write(row + 1, 1, '>', 0xF, 0x0);
+    //         framebuffer_set_cursor(row + 1, 3);
+    //     }
+    // } else {
+    //     // printString("\'", row + 2, 3);
+    //     // printString(command, row + 2 , 4);
+    //     // printString("\'", row + 2, lengthBuffer() + 4);
+    //     // printString(" is not recognized as an internal command", row + 2, lengthBuffer() + 5);
 
-        if (row + 4 >= 25) {
-            framebuffer_clear();
+    //     if (row + 4 >= 25) {
+    //         framebuffer_clear();
 
-            framebuffer_write(1, 1, '>', 0xF, 0x0);
-            framebuffer_set_cursor(1, 3);
-        } else {
-            framebuffer_write(row + 4, 1, '>', 0xF, 0x0);
-            framebuffer_set_cursor(row + 4, 3);
-        }
-    }
-}
+    //         framebuffer_write(1, 1, '>', 0xF, 0x0);
+    //         framebuffer_set_cursor(1, 3);
+    //     } else {
+    //         framebuffer_write(row + 4, 1, '>', 0xF, 0x0);
+    //         framebuffer_set_cursor(row + 4, 3);
+    //     }
+    // }
+// }
 
 void keyboard_isr(void){
     if (!keyboard_state.keyboard_input_on)
         keyboard_state.buffer_index = 0;
     else {
         uint8_t  scancode    = in(KEYBOARD_DATA_PORT);
+
+        // @deprecated, handled by user program
         // uint8_t c_row, c_col; // cursor row and column
         // framebuffer_get_cursor(&c_row, &c_col);
 
@@ -138,13 +137,14 @@ void keyboard_isr(void){
             char mapped_char = keyboard_scancode_1_to_ascii_map[scancode];
 
             if (keyboard_state.read_extended_mode) {
-
                 keyboard_state.read_extended_mode = FALSE;
 
                 if (scancode == EXT_SCANCODE_LEFT) {
                     if (keyboard_state.buffer_index > 0) {
                         keyboard_state.buffer_index--;
+                        keyboard_state.last_scancode = scancode;
 
+                        // @deprecated, handled by user program
                         // if (c_row != 0 && c_col == 0) {
                         //     framebuffer_set_cursor(c_row - 1, 79);
                         // } else {
@@ -152,8 +152,9 @@ void keyboard_isr(void){
                         // }
                     }
                 } else if (scancode == EXT_SCANCODE_RIGHT) {
-                    if (keyboard_state.buffer_index < lengthBuffer()) {
+                    if (keyboard_state.buffer_index < strlen(keyboard_state.keyboard_buffer)) {
                         keyboard_state.buffer_index++;
+                        keyboard_state.last_scancode = scancode;
                         // framebuffer_set_cursor(c_row, c_col + 1);
                     }
                 }
@@ -175,6 +176,8 @@ void keyboard_isr(void){
                     keyboard_state.keyboard_buffer[keyboard_state.buffer_index] = 0;
                     keyboard_state.last_char = '\b';
 
+
+                    // @deprecated, handled by user program
                     // if (c_row != 0 && c_col == 0) {
                     //     framebuffer_set_cursor(c_row - 1, 79);
                     //     framebuffer_write(c_row - 1, 79, '\0', 0xF, 0x0);
@@ -182,11 +185,16 @@ void keyboard_isr(void){
                     //     framebuffer_set_cursor(c_row, c_col - 1);
                     //     framebuffer_write(c_row, c_col - 1, '\0', 0xF, 0x0);
                     // }
+
                 } else if (mapped_char == '\b' && keyboard_state.buffer_index == 0) {
                     // do nothing if backspace is pressed but there is no character to delete.
                 } else if (mapped_char == '\n') {
+                    keyboard_state.keyboard_buffer[keyboard_state.buffer_index++] = '\n';
+                    keyboard_state.buffer_length++;
+                    keyboard_state.last_char = '\n';
+                    // @deprecated, handled by user program
                     // processCommand(c_row);
-                    clearBuffer();
+                    // clearBuffer();
 
                     /**
                      * buffer is still available at this point
@@ -211,6 +219,8 @@ void keyboard_isr(void){
                         keyboard_state.keyboard_buffer[keyboard_state.buffer_index++] = mapped_char;
                         keyboard_state.buffer_length++;
                         keyboard_state.last_char = mapped_char;
+
+                        // @deprecated, handled by user program
                         // framebuffer_write(c_row, c_col, mapped_char, 0xF, 0x0);
                         // framebuffer_set_cursor(c_row, c_col + 1);
                     }

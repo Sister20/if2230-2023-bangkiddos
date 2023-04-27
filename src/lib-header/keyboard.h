@@ -64,6 +64,15 @@ bool is_keyboard_blocking(void);
 // Get keyboard state
 struct KeyboardDriverState get_keyboard_state(void);
 
+// reset scancode
+void reset_scancode(void);
+
+// reset last char
+void reset_last_char(void);
+
+// clear keyboard buffer
+void clear_buffer();
+
 /* -- Keyboard Interrupt Service Routine -- */
 
 /**

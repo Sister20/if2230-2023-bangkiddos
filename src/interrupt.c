@@ -76,6 +76,12 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
         __asm__("sti"); // Due IRQ is disabled when main_interrupt_handler() called
         struct KeyboardDriverState keyboard = get_keyboard_state();
         memcpy((void *) cpu.ebx, (void *) &keyboard, sizeof(struct KeyboardDriverState));
+        reset_scancode();
+        if (keyboard.last_char == '\b') {
+            reset_last_char();
+        } else if (keyboard.last_char == '\n') {
+            clear_buffer();
+        }
     } 
 
     /** Graphical User Interface syscall */
@@ -102,6 +108,12 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
         */
         struct location loc = *(struct location *) cpu.ecx;
         printString((char *) cpu.ebx, loc.row, loc.col, cpu.edx);
+    } else if (cpu.eax == 53) {
+        /**
+         * clear framebuffer screen
+        */
+        framebuffer_clear();
+        framebuffer_set_cursor(1, 0);
     }
 
     /** String operation */ 
