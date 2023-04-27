@@ -12,14 +12,14 @@
 #include "lib-header/kernel_loader.h"
 
 void amongus() {
-    printString("  _", 5, 20);
-    printString(" | |", 6, 20);
-    printString(" | |__   ___ _   _", 7, 20);
-    printString(" | '_ \\ / _ \\ | | |", 8, 20);
-    printString(" | | | |  __/ |_| |", 9, 20);
-    printString(" |_| |_|\\___|\\__, |", 10, 20);
-    printString("              __/ |", 11, 20);
-    printString("             |___/", 12, 20);
+    printString("  _", 5, 20, 0xF);
+    printString(" | |", 6, 20, 0xF);
+    printString(" | |__   ___ _   _", 7, 20, 0xF);
+    printString(" | '_ \\ / _ \\ | | |", 8, 20, 0xF);
+    printString(" | | | |  __/ |_| |", 9, 20, 0xF);
+    printString(" |_| |_|\\___|\\__, |", 10, 20, 0xF);
+    printString("              __/ |", 11, 20, 0xF);
+    printString("             |___/", 12, 20, 0xF);
 
     printBlock(3, 8, 7, 0xF);
     printBlock(4, 7, 2, 0xF); printBlock(4, 9, 7, 0x4); printBlock(4, 15, 1, 0xF);
@@ -121,9 +121,8 @@ void kernel_setup(void) {
 
     // Set TSS $esp pointer and jump into shell 
     set_tss_kernel_current_stack();
-    printString("Jumping to shell...", 0x0, 0x0);
-    framebuffer_set_cursor(1, 0);
     // execute shell
+    framebuffer_set_cursor(1, 0);
     kernel_execute_user_program((uint8_t*) 0x0);
 
     while (TRUE);

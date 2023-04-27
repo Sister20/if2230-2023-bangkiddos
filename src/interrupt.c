@@ -1,4 +1,7 @@
 #include "lib-header/interrupt.h"
+#include "lib-header/framebuffer.h"
+#include "lib-header/string.h"
+#include "lib-header/keyboard.h"
 
 /** 
  * Note for others :
@@ -48,22 +51,99 @@ void pic_remap(void) {
 }
 /* End of PIC Remapping Section */
 
+
+struct location {
+    uint8_t row;
+    uint8_t col;
+};
+
 /* System Calls */
 void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptStack info) {
+
+    /** File System syscall */
     if (cpu.eax == 0) {
         struct FAT32DriverRequest request = *(struct FAT32DriverRequest*) cpu.ebx;
         *((int8_t*) cpu.ecx) = read(request);
+
+    /** Keyboard listener */
     } else if (cpu.eax == 4) {
+        /**
+         * listen to keyboard, return keyboard driver state
+         * ebx = ptr to keyboard driver state
+        */
+
         keyboard_state_activate();
         __asm__("sti"); // Due IRQ is disabled when main_interrupt_handler() called
-        // while (is_keyboard_blocking());
-        // char buf[KEYBOARD_BUFFER_SIZE];
-        // get_keyboard_buffer(buf);
-        // memcpy((char *) cpu.ebx, buf, cpu.ecx);
-    } else if (cpu.eax == 5) {
-        // puts((char *) cpu.ebx, cpu.ecx, cpu.edx); // Modified puts() on kernel side
-        // printString("Test", 2, 1);
+        struct KeyboardDriverState keyboard = get_keyboard_state();
+        memcpy((void *) cpu.ebx, (void *) &keyboard, sizeof(struct KeyboardDriverState));
+    } 
+
+    /** Graphical User Interface syscall */
+    else if (cpu.eax == 50) {
+        /** 
+         * get framebuffer curser location
+         * ebx = ptr row
+         * ecx = ptr col
+        */
+        framebuffer_get_cursor((uint8_t *) cpu.ebx,  (uint8_t *) cpu.ecx);
+    } else if (cpu.eax == 51) {
+        /**
+         * set framebuffer cursor location
+         * ebx = row
+         * ecx = col
+        */
+        framebuffer_set_cursor(cpu.ebx, cpu.ecx);
+    } else if (cpu.eax == 52) {
+        /**
+         * print string to framebuffer
+         * ebx = string (ptr to char)
+         * ecx = framebuffer location (has attr row and col)
+         * edx = color
+        */
+        struct location loc = *(struct location *) cpu.ecx;
+        printString((char *) cpu.ebx, loc.row, loc.col, cpu.edx);
     }
+
+    /** String operation */ 
+    else if (cpu.eax == 80) {
+        /**
+         * strlen
+         * ebx = string (ptr to char)
+         * ecx = length (ptr to int)
+        */
+        *((int *) cpu.ecx) = strlen((char *) cpu.ebx);
+    } else if (cpu.eax == 81) {
+        /**
+         * strcmp
+         * ebx = string1 (ptr to char)
+         * ecx = string2 (ptr to char)
+         * edx = result (ptr to int)
+        */
+        *((int *) cpu.edx) = strcmp((char *) cpu.ebx, (char *) cpu.ecx);
+    } else if (cpu.eax == 82) {
+        /**
+         * strcpy
+         * ebx = dest (ptr to char)
+         * ecx = src (ptr to char)
+        */
+        strcpy((char *) cpu.ebx, (char *) cpu.ecx);
+    } else if (cpu.eax == 83) {
+        /**
+         * strcat
+         * ebx = dest (ptr to char)
+         * ecx = src (ptr to char)
+        */
+        strcat((char *) cpu.ebx, (char *) cpu.ecx);
+    } else if (cpu.eax == 84) {
+        /**
+         * strset
+         * ebx = dest (ptr to char)
+         * ecx = char
+         * edx = length
+        */
+        strset((char *) cpu.ebx, (char) cpu.ecx, cpu.edx);
+    }
+
 }
 
 void main_interrupt_handler(

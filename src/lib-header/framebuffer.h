@@ -51,7 +51,7 @@ void framebuffer_get_cursor(uint8_t *r, uint8_t *c);
 void framebuffer_clear(void);
 
 /* Tambahan */
-void printString(char *string, uint8_t row, uint8_t col);
+void printString(char *string, uint8_t row, uint8_t col, uint8_t color);
 
 void printBlock(uint8_t row, uint8_t col, uint8_t n, uint8_t color);
 

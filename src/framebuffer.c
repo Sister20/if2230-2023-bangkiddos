@@ -66,7 +66,7 @@ void framebuffer_clear(void)
     }
 }
 
-void printString(char *string, uint8_t row, uint8_t col) {
+void printString(char *string, uint8_t row, uint8_t col, uint8_t color) {
     uint8_t i = 0;
     char c = string[i];
 
@@ -75,7 +75,7 @@ void printString(char *string, uint8_t row, uint8_t col) {
 
     while (c != '\0')
     {
-        framebuffer_write(row, col + i, c, 0xF, 0x0);
+        framebuffer_write(row, col + i, c, color, 0x0);
         i++;
         c = string[i];
     }
