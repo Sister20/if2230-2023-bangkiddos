@@ -39,6 +39,9 @@ struct KeyboardDriverState {
     bool    keyboard_input_on;
     uint8_t buffer_index;
     char    keyboard_buffer[KEYBOARD_BUFFER_SIZE];
+    uint8_t buffer_length;
+    char    last_char;
+    uint8_t last_scancode;
     
     // tambahan
     bool    uppercase_on;
@@ -58,6 +61,17 @@ void get_keyboard_buffer(char *buf);
 // Check whether keyboard ISR is active or not - @return Equal with keyboard_input_on value
 bool is_keyboard_blocking(void);
 
+// Get keyboard state
+struct KeyboardDriverState get_keyboard_state(void);
+
+// reset scancode
+void reset_scancode(void);
+
+// reset last char
+void reset_last_char(void);
+
+// clear keyboard buffer
+void clear_buffer();
 
 /* -- Keyboard Interrupt Service Routine -- */
 

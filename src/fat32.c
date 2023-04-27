@@ -2,6 +2,7 @@
 #include "lib-header/stdtype.h"
 #include "lib-header/fat32.h"
 #include "lib-header/stdmem.h"
+#include "lib-header/string.h"
 //#include "lib-header/cmos.h"
 
 const uint8_t fs_signature[BLOCK_SIZE] = {
@@ -368,18 +369,6 @@ int8_t delete(struct FAT32DriverRequest request) {
     return 0; // success
 
     return -1; // unknown
-}
-
-int strlen(char *str) {
-    // strlen implementation
-	int count = 0;
-
-    while (*str != '\0') { // as long as not '\0', iterate
-        count ++;
-        str ++;
-    }
-
-	return count;
 }
 
 int8_t dirtable_linear_search(uint32_t parent_cluster_number, struct FAT32DriverRequest entry){

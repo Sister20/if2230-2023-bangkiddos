@@ -247,9 +247,6 @@ int8_t delete(struct FAT32DriverRequest request);
 /* Directory table search */
 int8_t dirtable_linear_search(uint32_t parent_cluster_number, struct FAT32DriverRequest entry);
 
-/* Implementasi strlen */
-int strlen(char *str);
-
 /* Directory validation */
 bool isDirectoryValid(uint32_t parent_cluster_number);
 
