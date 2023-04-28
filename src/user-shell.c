@@ -8,10 +8,17 @@
 #define strcat(str1,str2) syscall(83, (uint32_t) str1, (uint32_t) str2, 0)
 #define strcpy(dest,src) syscall(82, (uint32_t) dest, (uint32_t) src, 0)
 #define strset(dest,ch,len) syscall(84, (uint32_t) dest, (uint32_t) ch, len)
+#define strsplit(str,delim,result) syscall(85, (uint32_t) str, (uint32_t) delim, (uint32_t) result)
 #define get_cursor_loc(rw,cl) syscall(50, (uint32_t) &rw, (uint32_t) &cl, 0)
 #define set_cursor_loc(rw,cl) syscall(51, rw, cl, 0)
 #define print_to_screen(str,loc,color) syscall(52, (uint32_t) str, (uint32_t) &loc, color)
 #define clear_screen() syscall(53, 0, 0, 0)
+#define read_file(request,retcode) syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0)
+#define read_directory(request,retcode) syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0)
+#define write_file(request,retcode) syscall(2, (uint32_t) &request, (uint32_t) &retcode, 0)
+#define delete_file(request,retcode) syscall(3, (uint32_t) &request, (uint32_t) &retcode, 0)
+#define memcpy(dest,src,len) syscall(10, (uint32_t) dest, (uint32_t) src, len)
+#define memset(dest,val,len) syscall(11, (uint32_t) dest, (uint32_t) val, len)
 
 #define get_cur_working_dir(cur_working_dir, dir_table) syscall(60, (uint32_t)cur_working_dir, (uint32_t) dir_table, 0)
 
@@ -34,18 +41,19 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
 }
 
 int main(void) {
-    // struct ClusterBuffer cl           = {0};
-    // struct FAT32DriverRequest request = {
-    //     .buf                   = &cl,
-    //     .name                  = "ikanaide",
-    //     .ext                   = "\0\0\0",
-    //     .parent_cluster_number = ROOT_CLUSTER_NUMBER,
-    //     .buffer_size           = CLUSTER_SIZE,
-    // };
-    // int32_t retcode;
-    // syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
-    // if (retcode == 0)
-    //     syscall(5, (uint32_t) "owo\n", 4, 0xF);
+    struct ClusterBuffer cl           = {0};
+    struct FAT32DriverRequest request = {
+        .buf                   = &cl,
+        .name                  = "amogus",
+        .ext                   = "txt",
+        .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+        .buffer_size           = CLUSTER_SIZE,
+    };
+    int32_t retcode;
+    syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
+    if (retcode == 0) {
+        syscall(5, (uint32_t) "owo\n", 4, 0xF);
+    }
 
     print_shell_directory();
     while (TRUE) {
@@ -169,14 +177,20 @@ void listen_to_keyboard() {
 }
 
 void process_command() {
+    char buffer[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+    strsplit(state.command_buffer, ' ', buffer);
+
+    char cmd[MAX_COMMAND_LENGTH];
+    strcpy(cmd, buffer[0]); 
+
     uint8_t cmd_len;
-    strlen(state.command_buffer, cmd_len);
+    strlen(cmd, cmd_len);
     uint8_t rw, cl;
     get_cursor_loc(rw, cl);
 
     if (strcmp(state.command_buffer, "clear") == 0 || strcmp(state.command_buffer, "cls") == 0) {
         clear_screen();
-    } else if (strcmp(state.command_buffer, "ls") == 0) {
+    } else if (strcmp(cmd, "ls") == 0) {
         struct location loc = {rw, 0};
 
         struct FAT32DirectoryTable dir_table;
@@ -191,12 +205,20 @@ void process_command() {
             cl = 0;
             set_cursor_loc(rw, cl);
         }
+    } else if (strcmp(cmd, "cat") == 0) {
+        // struct location cursor_loc = {rw + 1, 0};
+        set_cursor_loc(rw + 1, 0);
+
+        // char arg[MAX_COMMAND_LENGTH];
+        // strcpy(arg, buffer[1]);
+
+        // cat(arg, cursor_loc);
     } else {
         struct location cursor_loc = {rw + 1, 0};
 
         print_to_screen("\'", cursor_loc, SHELL_COMMAND_COLOR);
         cursor_loc.col += 1;
-        print_to_screen(state.command_buffer, cursor_loc, SHELL_COMMAND_COLOR);
+        print_to_screen(cmd, cursor_loc, SHELL_COMMAND_COLOR);
         cursor_loc.col += cmd_len;
         print_to_screen("\'", cursor_loc, SHELL_COMMAND_COLOR);
         cursor_loc.col += 2;
@@ -213,48 +235,6 @@ void process_command() {
     reset_command_buffer();
     print_shell_directory();
 }
-
-// void processCommand(uint8_t row) {
-    // char command[lengthBuffer() + 1];
-
-    // for (int i = 0; i < lengthBuffer(); i ++) {
-    //     command[i] = keyboard_state.keyboard_buffer[i];
-    // }
-
-    // command[lengthBuffer()] = '\0';
-
-    // if (strcmp(command, "clear") == 0) {
-    //     framebuffer_clear();
-
-    //     framebuffer_write(1, 1, '>', 0xF, 0x0);
-    //     framebuffer_set_cursor(1, 3);
-    // } else if (strcmp(command, "") == 0) {
-    //     if (row + 1 >= 25) {
-    //         framebuffer_clear();
-
-    //         framebuffer_write(1, 1, '>', 0xF, 0x0);
-    //         framebuffer_set_cursor(1, 3);
-    //     } else {
-    //         framebuffer_write(row + 1, 1, '>', 0xF, 0x0);
-    //         framebuffer_set_cursor(row + 1, 3);
-    //     }
-    // } else {
-    //     // printString("\'", row + 2, 3);
-    //     // printString(command, row + 2 , 4);
-    //     // printString("\'", row + 2, lengthBuffer() + 4);
-    //     // printString(" is not recognized as an internal command", row + 2, lengthBuffer() + 5);
-
-    //     if (row + 4 >= 25) {
-    //         framebuffer_clear();
-
-    //         framebuffer_write(1, 1, '>', 0xF, 0x0);
-    //         framebuffer_set_cursor(1, 3);
-    //     } else {
-    //         framebuffer_write(row + 4, 1, '>', 0xF, 0x0);
-    //         framebuffer_set_cursor(row + 4, 3);
-    //     }
-    // }
-// }
 
 void reset_command_buffer() {
     state.buffer_index = 0;

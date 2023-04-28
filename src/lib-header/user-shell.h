@@ -12,6 +12,11 @@
 #define EXT_SCANCODE_LEFT      0x4B
 #define EXT_SCANCODE_RIGHT     0x4D
 
+#define MAX_COMMAND_SPLIT 16
+#define MAX_COMMAND_LENGTH 256
+
+
+
 struct location {
     uint8_t row;
     uint8_t col;
@@ -44,5 +49,9 @@ void listen_to_keyboard();
 void process_command();
 uint8_t strcmp(char * str1, char * str2);
 void reset_command_buffer();
+<<<<<<< HEAD
 
 void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_table);
+=======
+void cat(char filename[256]);
+>>>>>>> 812979f7861f80c76aad50cd0eaa32ba8007a6bd

@@ -63,9 +63,37 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
 
     /** File System syscall */
     if (cpu.eax == 0) {
+        /**
+         * read file
+         * ebx = ptr to FAT32DriverRequest
+         * ecx = ptr to return value
+        */
         struct FAT32DriverRequest request = *(struct FAT32DriverRequest*) cpu.ebx;
         *((int8_t*) cpu.ecx) = read(request);
-
+    } else if (cpu.eax == 1) {
+        /**
+         * read directory
+         * ebx = ptr to FAT32DriverRequest
+         * ecx = ptr to return value
+        */
+        struct FAT32DriverRequest request = *(struct FAT32DriverRequest*) cpu.ebx;
+        *((int8_t*) cpu.ecx) = read_directory(request);
+    } else if (cpu.eax == 2) {
+        /**
+         * write file
+         * ebx = ptr to FAT32DriverRequest
+         * ecx = ptr to return value
+        */
+        struct FAT32DriverRequest request = *(struct FAT32DriverRequest*) cpu.ebx;
+        *((int8_t*) cpu.ecx) = write(request);
+    } else if (cpu.eax == 3) {
+        /**
+         * delete file
+         * ebx = ptr to FAT32DriverRequest
+         * ecx = ptr to return value
+        */
+        struct FAT32DriverRequest request = *(struct FAT32DriverRequest*) cpu.ebx;
+        *((int8_t*) cpu.ecx) = delete(request);
     /** Keyboard listener */
     } else if (cpu.eax == 4) {
         /**
@@ -84,7 +112,25 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
             clear_buffer();
         }
     } 
-
+    /** Memory management */
+    else if (cpu.eax == 10) {
+        /**
+         * memcpy
+         * ebx = ptr to dest
+         * ecx = ptr to src
+         * edx = size
+        */
+        memcpy((void *) cpu.ebx, (void *) cpu.ecx, cpu.edx);
+    } else if (cpu.eax == 11)
+    {
+        /**
+         * memset
+         * ebx = ptr to dest
+         * ecx = value
+         * edx = size
+        */
+        memset((void *) cpu.ebx, cpu.ecx, cpu.edx);
+    }
     /** Graphical User Interface syscall */
     else if (cpu.eax == 50) {
         /** 
@@ -167,6 +213,14 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
          * edx = length
         */
         strset((char *) cpu.ebx, (char) cpu.ecx, cpu.edx);
+    } else if (cpu.eax == 85) {
+        /**
+         * strsplit
+         * ebx = str to split (ptr to char)
+         * ecx = delimiter (char)
+         * edx = result pointer (must be char[256][16])
+        */
+        strsplit((char *) cpu.ebx, (char) cpu.ecx, (char (*)[16]) cpu.edx);
     }
 
 }
