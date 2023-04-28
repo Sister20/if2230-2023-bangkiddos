@@ -511,3 +511,7 @@ bool doesDirHasFiles(uint32_t parent_cluster_number) {
 
     return FALSE;
 }
+
+void get_curr_working_dir(uint32_t cur_cluster, struct FAT32DirectoryTable *dir_table) {
+    read_clusters(dir_table, cur_cluster, 1);
+}
