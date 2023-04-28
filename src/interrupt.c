@@ -171,11 +171,8 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
          * ebx = buffer (ptr to char)
          * edx = color
          */
-        // struct location loc = *(struct location *)cpu.ecx;
         struct FAT32DirectoryTable *dir_table = (struct FAT32DirectoryTable *)cpu.ecx;
         get_curr_working_dir(cpu.ebx, dir_table);
-
-        // printString(dir, loc.row, loc.col, cpu.edx);
     }
 
     /** String operation */ 
