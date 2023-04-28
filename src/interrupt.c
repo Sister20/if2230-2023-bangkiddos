@@ -218,9 +218,9 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
          * strsplit
          * ebx = str to split (ptr to char)
          * ecx = delimiter (char)
-         * edx = result pointer (must be char[256][16])
+         * edx = result pointer (must be char[16][256])
         */
-        strsplit((char *) cpu.ebx, (char) cpu.ecx, (char (*)[16]) cpu.edx);
+        strsplit((char *) cpu.ebx, (char) cpu.ecx, (char (*)[256]) cpu.edx);
     }
 
 }

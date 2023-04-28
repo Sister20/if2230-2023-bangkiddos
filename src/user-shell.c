@@ -214,7 +214,7 @@ void process_command() {
         char arg[MAX_COMMAND_LENGTH];
         strcpy(arg, buffer[1]);
 
-        // cat(arg, cursor_loc);
+        cat(arg);
     } else {
         struct location cursor_loc = {rw + 1, 0};
 
