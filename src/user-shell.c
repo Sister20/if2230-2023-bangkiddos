@@ -9,6 +9,8 @@
 #define strcpy(dest,src) syscall(82, (uint32_t) dest, (uint32_t) src, 0)
 #define strset(dest,ch,len) syscall(84, (uint32_t) dest, (uint32_t) ch, len)
 #define strsplit(str,delim,result) syscall(85, (uint32_t) str, (uint32_t) delim, (uint32_t) result)
+#define strncpy(dest, src, len) syscall(86, (uint32_t) dest, (uint32_t) src, (uint32_t) len)
+
 #define get_cursor_loc(rw,cl) syscall(50, (uint32_t) &rw, (uint32_t) &cl, 0)
 #define set_cursor_loc(rw,cl) syscall(51, rw, cl, 0)
 #define print_to_screen(str,loc,color) syscall(52, (uint32_t) str, (uint32_t) &loc, color)
@@ -27,7 +29,8 @@ static struct ShellState state = {
     .command_buffer    = {0},
     .buffer_index      = 0,
     .buffer_length     = 0,
-    .command_start_location = {0, 0}
+    .command_start_location = {0, 0},
+    .dir_string        = {0}
 };
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
@@ -84,14 +87,11 @@ uint8_t strcmp(char* str1, char* str2){
 }
 
 void print_shell_directory() {
-    char directory[256] = "";
-    /* Get path to current directory */
-
     char shell_prompt[256] = SHELL_DIRECTORY;
     struct location cursor_loc = {0, 0};
 
     // concat
-    strcat(shell_prompt, directory);
+    strcat(shell_prompt, state.dir_string);
     strcat(shell_prompt, SHELL_PROMPT);
 
     uint8_t rw, cl;
@@ -192,6 +192,16 @@ void process_command() {
 
     if (strcmp(cmd, "clear") == 0 || strcmp(cmd, "cls") == 0) {
         clear_screen();
+    } else if (strcmp(cmd, "cd") == 0) {
+        set_cursor_loc(rw + 1, 0);
+
+        char arg[MAX_COMMAND_LENGTH];
+        strcpy(arg, buffer[1]);
+
+        struct FAT32DirectoryTable dir_table;
+        get_cur_working_dir(state.working_directory, (uint32_t)&dir_table);
+
+        change_dir(arg, dir_table);
     } else if (strcmp(cmd, "ls") == 0) {
         struct location loc = {rw, 0};
 
@@ -244,28 +254,83 @@ void reset_command_buffer() {
     strset(state.command_buffer, 0, SHELL_BUFFER_SIZE);
 }
 
+void change_dir(char path[256], struct FAT32DirectoryTable dir_table) {
+    uint32_t parent_cluster_number = dir_table.table[0].cluster_high << 16 | dir_table.table[0].cluster_low;
+    uint8_t rw, cl;
+    get_cursor_loc(rw, cl);
+    struct location loc = {rw, cl};
+
+    if (strcmp(path, "..") == 0) {
+        if (state.working_directory > 2) {
+            char buffer[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+            strsplit(state.dir_string, '/', buffer);
+
+            int8_t count = 0;
+            for (int i = 0; i < 16; i ++) {
+                if (buffer[i][0] != 0) {
+                    count ++;
+                }
+            }
+
+            char res[256] = {0};
+            for (int i = 1; i < count; i ++) {
+                if (count != 1) {
+                    strcat(res, "/");
+                }
+                strcat(res, buffer[i]);
+            }
+            uint32_t size = 256;
+            strncpy(state.dir_string, res, size);
+            state.working_directory = parent_cluster_number;
+        }
+    } else {
+        for (int i = 1; i < 64; i++) { // not including parent
+            if (dir_table.table[i].user_attribute == UATTR_NOT_EMPTY &&
+                dir_table.table[i].attribute == ATTR_SUBDIRECTORY) { // if subdir
+
+                if (strcmp(dir_table.table[i].name, path) == 0) { // if matches
+                    strcat(state.dir_string, "/");
+                    strcat(state.dir_string, path);
+
+                    uint32_t cluster_number = dir_table.table[i].cluster_high << 16 | dir_table.table[i].cluster_low;
+
+                    state.working_directory = cluster_number;
+                    break;
+                }
+            }
+        }
+    }
+
+    rw = loc.row + 1;
+    cl = 0;
+    set_cursor_loc(rw, cl);
+}
+
 void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_table) {
     // Iterate through the directory entries and print the names of subdirectories
     for (int i = 1; i < 64; i++) { // not including parent
         if (dir_table.table[i].user_attribute == UATTR_NOT_EMPTY) {
-            char dir_name[9];
-            int j;
-            for (j = 0; j < 8; j++)
-            {
-                if (dir_table.table[i].name[j] == ' ')
-                {
-                    break;
-                }
-                dir_name[j] = dir_table.table[i].name[j];
-            }
-            dir_name[j] = '\0';
+            char dir_name[12] = {0};
+            // int j;
+            // for (j = 0; j < 8; j++)
+            // {
+            //     if (dir_table.table[i].name[j] == ' ')
+            //     {
+            //         break;
+            //     }
+            //     dir_name[j] = dir_table.table[i].name[j];
+            // }
+            strcat(dir_name, dir_table.table[i].name);
+            strcat(dir_name, dir_table.table[i].ext);
+
+            dir_name[11] = '\0';
             loc.row ++;
             print_to_screen(dir_name, loc, SHELL_COMMAND_COLOR);
         }
     }
 
     uint8_t rw, cl;
-    rw = loc.row + 1;
+    rw = loc.row + 2;
     cl = 0;
     set_cursor_loc(rw, cl);
 }

@@ -36,9 +36,9 @@ void strcpy(char* dest, char* src){
     dest[i] = '\0';
 }
 
-void strncpy(char* dest, char* src, uint8_t len){
-    int i = 0;
-    while(src[i] != '\0' && i < len){
+void strncpy(char* dest, char* src, uint32_t len){
+    uint32_t i = 0;
+    while(i < len){
         dest[i] = src[i];
         i++;
     }

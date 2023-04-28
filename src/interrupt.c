@@ -221,8 +221,15 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
          * edx = result pointer (must be char[16][256])
         */
         strsplit((char *) cpu.ebx, (char) cpu.ecx, (char (*)[256]) cpu.edx);
+    } else if (cpu.eax == 86) {
+        /**
+         * strncpy
+         * ebx = dest (ptr to char)
+         * ecx = src (ptr to char)
+         * edx = len
+         */
+        strncpy((char *) cpu.ebx, (char *) cpu.ecx, (uint32_t) cpu.edx);
     }
-
 }
 
 void main_interrupt_handler(
