@@ -237,6 +237,16 @@ void process_command() {
         strcpy(arg, buffer[1]);
 
         cat(arg);
+    } else if (strcmp(cmd, "mv") == 0) {
+        // set_cursor_loc(rw + 1, 0);
+
+        // char file[MAX_COMMAND_LENGTH];
+        // char dest[MAX_COMMAND_LENGTH];
+
+        // strcpy(file, buffer[1]);
+        // strcpy(dest, buffer[2]);
+
+        // mv(file, dest);
     } else if (strcmp(cmd, "mkdir") == 0) {
         set_cursor_loc(rw + 1, 0);
 
@@ -556,3 +566,65 @@ void rm(char arg[256]) {
 
     set_cursor_loc(rw + 1, 0);
 }
+
+// void mv(char src[256], char dest[256]) {
+//     uint8_t rw, cl;
+//     get_cursor_loc(rw, cl);
+//     struct location cursor_loc = {rw, cl};
+
+//     struct ClusterBuffer res = {0};
+//     struct FAT32DriverRequest req = {
+//         .buf                   = &res,
+//         .name                  = "\0\0\0\0",
+//         .ext                   = "\0\0\0",
+//         .parent_cluster_number = state.working_directory,
+//         .buffer_size           = CLUSTER_SIZE,
+//     };
+
+//     /* Looking for file of src */
+//     char src_split[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+//     strsplit(src, '/', src_split);
+
+//     print_to_screen("src:" , cursor_loc, SHELL_COMMAND_COLOR);
+//     cursor_loc.row++;
+
+//     uint8_t i = 0;
+//     uint8_t stat;
+
+//     while (src_split[i][0] != '\0' && i < MAX_COMMAND_SPLIT) {
+//         char split_filename[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+//         strsplit(arg, '.', split_filename);
+
+//         memcpy(req.name, split_filename[0], 8);
+//         memcpy(req.ext, split_filename[1], 3);   
+
+//         read_directory(req, stat);
+//     }
+
+//     cursor_loc.row++;
+//     char dest_split[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+//     strsplit(dest, '/', dest_split);
+
+//     print_to_screen("dest:" , cursor_loc, SHELL_COMMAND_COLOR);
+//     cursor_loc.row++;
+
+//     i = 0;
+//     while (dest_split[i][0] != '\0' && i < MAX_COMMAND_SPLIT) {
+//         print_to_screen(dest_split[i], cursor_loc, SHELL_COMMAND_COLOR);
+//         cursor_loc.row++;
+//         i++;
+//     }
+
+//     set_cursor_loc(cursor_loc.row + 1, 0);
+
+
+
+//     // char split_filename[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+//     // strsplit(arg, '.', split_filename);
+
+//     // memcpy(req.name, split_filename[0], 8);
+//     // memcpy(req.ext, split_filename[1], 3);
+
+//     // uint8_t stat;
+   
+// }
