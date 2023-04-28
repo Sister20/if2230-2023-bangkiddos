@@ -26,7 +26,7 @@ void strcpy(char* dest, char* src);
  * @param src the source string
  * @param len the maximum length
 */
-void strncpy(char* dest, char* src, uint8_t len);
+void strncpy(char* dest, char* src, uint32_t len);
 
 /**
  * concatenate two strings

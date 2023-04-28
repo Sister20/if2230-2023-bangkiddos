@@ -28,6 +28,7 @@ struct ShellState {
     uint8_t             buffer_index;
     uint8_t             buffer_length;
     struct location     command_start_location;
+    char                dir_string[256];
 };
 
 struct KeyboardDriverState {
@@ -49,6 +50,7 @@ void listen_to_keyboard();
 void process_command();
 uint8_t strcmp(char * str1, char * str2);
 void reset_command_buffer();
+void change_dir(char path[256], struct FAT32DirectoryTable dir_table);
 void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_table);
 void cat(char arg[256]);
 void rm(char arg[256]);
