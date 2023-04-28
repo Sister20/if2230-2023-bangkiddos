@@ -12,6 +12,11 @@
 #define EXT_SCANCODE_LEFT      0x4B
 #define EXT_SCANCODE_RIGHT     0x4D
 
+#define MAX_COMMAND_SPLIT 16
+#define MAX_COMMAND_LENGTH 256
+
+
+
 struct location {
     uint8_t row;
     uint8_t col;
@@ -44,3 +49,4 @@ void listen_to_keyboard();
 void process_command();
 uint8_t strcmp(char * str1, char * str2);
 void reset_command_buffer();
+void cat(char filename[256]);

@@ -42,3 +42,11 @@ void strcat(char* dest, char* src);
  * @param len the length of the string
 */
 void strset(char* str, char c, uint8_t len);
+
+/**
+ * split a string by a delimiter
+ * @param str the string
+ * @param delim the delimiter
+ * @param result the result array
+*/
+void strsplit(char* str, char delim, char result[256][16]);
