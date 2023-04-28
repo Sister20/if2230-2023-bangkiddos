@@ -18,7 +18,7 @@
 #define read_file(request,retcode) syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0)
 #define read_directory(request,retcode) syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0)
 #define write_file(request,retcode) syscall(2, (uint32_t) &request, (uint32_t) &retcode, 0)
-#define delete_file(request,retcode) syscall(3, (uint32_t) &request, (uint32_t) &retcode, 0)
+#define delete(request,retcode) syscall(3, (uint32_t) &request, (uint32_t) &retcode, 0)
 #define memcpy(dest,src,len) syscall(10, (uint32_t) dest, (uint32_t) src, len)
 #define memset(dest,val,len) syscall(11, (uint32_t) dest, (uint32_t) val, len)
 
@@ -44,7 +44,20 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
 }
 
 int main(void) {
+    char * amogus_song = "You're a sneaky little impostor!\n"
+"Aren't you?\n"
+"But you're among us!\n"
+"I can feel it!\n"
+"I can feel it in my bones!\n"
+"So why don't you show yourself?\n"
+"And leave us all alone?";
+
     struct ClusterBuffer cl           = {0};
+    
+    uint8_t text_len;
+    strlen(amogus_song, text_len);
+    memcpy(cl.buf, amogus_song, text_len);
+
     struct FAT32DriverRequest request = {
         .buf                   = &cl,
         .name                  = "amogus",
@@ -52,10 +65,11 @@ int main(void) {
         .parent_cluster_number = ROOT_CLUSTER_NUMBER,
         .buffer_size           = CLUSTER_SIZE,
     };
-    int32_t retcode;
-    syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
+    int8_t retcode;
+    write_file(request, retcode);
     if (retcode == 0) {
-        syscall(5, (uint32_t) "owo\n", 4, 0xF);
+        // struct location loc = {12, 0};
+        // print_to_screen("amogus.txt created successfully", loc, SHELL_COMMAND_COLOR);    
     }
 
     print_shell_directory();
@@ -64,7 +78,6 @@ int main(void) {
     }
 
     return 0;
-
 }
 
 uint8_t strcmp(char* str1, char* str2){
@@ -218,13 +231,82 @@ void process_command() {
             set_cursor_loc(rw, cl);
         }
     } else if (strcmp(cmd, "cat") == 0) {
-        // struct location cursor_loc = {rw + 1, 0};
         set_cursor_loc(rw + 1, 0);
 
         char arg[MAX_COMMAND_LENGTH];
         strcpy(arg, buffer[1]);
 
         cat(arg);
+    } else if (strcmp(cmd, "mkdir") == 0) {
+        set_cursor_loc(rw + 1, 0);
+
+        char arg[MAX_COMMAND_LENGTH];
+        strcpy(arg, buffer[1]);
+
+        uint8_t rw, cl;
+        get_cursor_loc(rw, cl);
+        struct location cursor_loc = {rw, cl};
+
+        struct ClusterBuffer res = {0};
+        struct FAT32DriverRequest req = {
+            .buf                   = &res,
+            .name                  = "\0\0\0\0",
+            .ext                   = "\0\0\0",
+            .parent_cluster_number = state.working_directory,
+            .buffer_size           = CLUSTER_SIZE,
+        };
+
+        char split_filename[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+
+        strsplit(arg, '.', split_filename);
+        strcpy(req.name, split_filename[0]);
+        strcpy(req.ext, split_filename[1]);
+
+        // check whether the folder already exists
+        uint8_t stat;
+        if (req.name[0] == '\0') {
+            stat = 3;
+        } else {
+            read_file(req, stat);   
+        }
+
+        char msg[256] = {0};
+
+        switch (stat)
+        {
+        case 0:
+            /* folder already exists */
+            print_to_screen("A folder with the same name already exists", cursor_loc, SHELL_COMMAND_COLOR);
+            break;
+        case 3:
+            /* folder doesn't exist, thus make folder */
+            strcat(msg, "Folder \'");
+            strcat(msg, arg);
+            strcat(msg, "\' has been made");
+
+            uint8_t writeStat;
+            write_file(req, writeStat);
+
+            print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+            break;
+        default:
+            break;
+        }
+
+        if (rw + 1 >= 25) {
+            clear_screen();
+        } else {
+            rw++;
+            cl = 0;
+            set_cursor_loc(rw, cl);
+        }
+    } else if (strcmp(cmd, "rm") == 0) {
+        set_cursor_loc(rw + 1, 0);
+
+        char arg[MAX_COMMAND_LENGTH];
+        strcpy(arg, buffer[1]);
+
+        rm(arg);
     } else {
         struct location cursor_loc = {rw + 1, 0};
 
@@ -310,7 +392,7 @@ void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_t
     // Iterate through the directory entries and print the names of subdirectories
     for (int i = 1; i < 64; i++) { // not including parent
         if (dir_table.table[i].user_attribute == UATTR_NOT_EMPTY) {
-            char dir_name[12] = {0};
+            char dir_name[13] = {0};
             // int j;
             // for (j = 0; j < 8; j++)
             // {
@@ -321,9 +403,12 @@ void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_t
             //     dir_name[j] = dir_table.table[i].name[j];
             // }
             strcat(dir_name, dir_table.table[i].name);
+            if (dir_table.table[i].attribute != ATTR_SUBDIRECTORY) {
+                strcat(dir_name, ".");
+            }
             strcat(dir_name, dir_table.table[i].ext);
 
-            dir_name[11] = '\0';
+            dir_name[12] = '\0';
             loc.row ++;
             print_to_screen(dir_name, loc, SHELL_COMMAND_COLOR);
         }
@@ -335,7 +420,7 @@ void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_t
     set_cursor_loc(rw, cl);
 }
 
-void cat(char filename[256]) {
+void cat(char arg[256]) {
     uint8_t rw, cl;
     get_cursor_loc(rw, cl);
     struct location cursor_loc = {rw, cl};
@@ -343,31 +428,52 @@ void cat(char filename[256]) {
     struct ClusterBuffer res = {0};
     struct FAT32DriverRequest req = {
         .buf                   = &res,
-        .name                  = "temp",
-        .ext                   = "txt",
-        .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+        .name                  = "\0\0\0\0",
+        .ext                   = "\0\0\0",
+        .parent_cluster_number = state.working_directory,
         .buffer_size           = CLUSTER_SIZE,
     };
 
-    uint8_t arg_len;
-    strlen(filename, arg_len);
-    memcpy(req.name, filename, arg_len);
+    char split_filename[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+    strsplit(arg, '.', split_filename);
+
+    memcpy(req.name, split_filename[0], 8);
+    memcpy(req.ext, split_filename[1], 3);
 
     uint8_t stat;
-    read_file(req, stat);   
 
-    char * msg;
+    if (req.name[0] == '\0') {
+        stat = 3;
+    } else {
+        read_file(req, stat);   
+    }
+
+    char msg[256] = {0};
 
     switch (stat)
     {
     case 0:
         /* success */
         print_to_screen(res.buf, cursor_loc, SHELL_COMMAND_COLOR);
+
+        uint8_t row_count = 0;
+        uint8_t i = 0;
+        char c = res.buf[0];
+        while (c != '\0') {
+            if (c == '\n') {
+                row_count++;
+            }
+            i++;
+            c = res.buf[i];
+        }
+        rw += row_count;
+        set_cursor_loc(rw, 0);
+
         break;
     case 1:
         /* not a file */
-        msg = "\'";
-        strcat(msg, filename);
+        strcat(msg, "\'");
+        strcat(msg, arg);
         strcat(msg, "\' is not a file");
         print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
         break;
@@ -377,11 +483,72 @@ void cat(char filename[256]) {
         break;
     case 3:
         /* File not found */
-        msg = "File \'";
-        strcat(msg, filename);
+        strcat(msg, "File \'");
+        strcat(msg, arg);
         strcat(msg, "\' not found");
 
         print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+        break;
+    default:
+        break;
+    }
+
+    set_cursor_loc(rw + 1, 0);
+}
+
+void rm(char arg[256]) {
+    uint8_t rw, cl;
+    get_cursor_loc(rw, cl);
+    struct location cursor_loc = {rw, cl};
+
+    struct ClusterBuffer res = {0};
+    struct FAT32DriverRequest req = {
+        .buf                   = &res,
+        .name                  = "\0\0\0\0",
+        .ext                   = "\0\0\0",
+        .parent_cluster_number = state.working_directory,
+        .buffer_size           = CLUSTER_SIZE,
+    };
+
+    char split_filename[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+    strsplit(arg, '.', split_filename);
+
+    memcpy(req.name, split_filename[0], 8);
+    memcpy(req.ext, split_filename[1], 3);
+
+    uint8_t stat;
+
+    if (req.name[0] == '\0') {
+        stat = 1;
+    } else {
+        delete(req, stat);   
+    }
+
+    char msg[256] = {0};
+
+    switch (stat)
+    {
+    case 0:
+        /* success */
+        strcat(msg, "File/folder \'");
+        strcat(msg, arg);
+        strcat(msg, "\' deleted");
+
+        print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+        break;
+    case 1:
+        /* File not found */
+        strcat(msg, "File \'");
+        strcat(msg, arg);
+        strcat(msg, "\' not found");
+
+        print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+        break;
+    case 2:
+        /* Folder is not empty */
+        strcat(msg, "Folder \'");
+        strcat(msg, arg);
+        strcat(msg, "\' is not empty. Can't delete directly.");
         break;
     default:
         break;
