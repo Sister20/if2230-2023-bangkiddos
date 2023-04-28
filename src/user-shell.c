@@ -41,18 +41,32 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
 }
 
 int main(void) {
+    char * amogus_song = "You're a sneaky little impostor!\n"
+"Aren't you?\n"
+"But you're among us!\n"
+"I can feel it!\n"
+"I can feel it in my bones!\n"
+"So why don't you show yourself?\n"
+"And leave us all alone?";
+
     struct ClusterBuffer cl           = {0};
+    
+    uint8_t text_len;
+    strlen(amogus_song, text_len);
+    memcpy(cl.buf, amogus_song, text_len);
+
     struct FAT32DriverRequest request = {
         .buf                   = &cl,
         .name                  = "amogus",
-        .ext                   = "txt",
+        .ext                   = "\0\0\0",
         .parent_cluster_number = ROOT_CLUSTER_NUMBER,
         .buffer_size           = CLUSTER_SIZE,
     };
     int32_t retcode;
-    syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
+    write_file(request, retcode);
     if (retcode == 0) {
-        syscall(5, (uint32_t) "owo\n", 4, 0xF);
+        // struct location loc = {12, 0};
+        // print_to_screen("amogus.txt created successfully", loc, SHELL_COMMAND_COLOR);    
     }
 
     print_shell_directory();
@@ -61,7 +75,6 @@ int main(void) {
     }
 
     return 0;
-
 }
 
 uint8_t strcmp(char* str1, char* str2){
@@ -278,30 +291,52 @@ void cat(char filename[256]) {
     struct ClusterBuffer res = {0};
     struct FAT32DriverRequest req = {
         .buf                   = &res,
-        .name                  = "temp",
-        .ext                   = "txt",
-        .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+        .name                  = "\0\0\0\0",
+        .ext                   = "\0\0\0",
+        .parent_cluster_number = state.working_directory,
         .buffer_size           = CLUSTER_SIZE,
     };
 
-    uint8_t arg_len;
-    strlen(filename, arg_len);
-    memcpy(req.name, filename, arg_len);
+    char split_filename[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+    strsplit(filename, '.', split_filename);
+
+    strcpy(req.name, split_filename[0]);
+    strcpy(req.ext, split_filename[1]);
 
     uint8_t stat;
-    read_file(req, stat);   
 
-    char * msg;
+    if (req.name[0] == '\0') {
+        stat = 3;
+    } else {
+        read_file(req, stat);   
+    }
+
+
+    char msg[256] = {0};
 
     switch (stat)
     {
     case 0:
         /* success */
         print_to_screen(res.buf, cursor_loc, SHELL_COMMAND_COLOR);
+
+        uint8_t row_count = 0;
+        uint8_t i = 0;
+        char c = res.buf[0];
+        while (c != '\0') {
+            if (c == '\n') {
+                row_count++;
+            }
+            i++;
+            c = res.buf[i];
+        }
+        rw += row_count;
+        set_cursor_loc(rw, 0);
+
         break;
     case 1:
         /* not a file */
-        msg = "\'";
+        strcat(msg, "\'");
         strcat(msg, filename);
         strcat(msg, "\' is not a file");
         print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
@@ -312,7 +347,7 @@ void cat(char filename[256]) {
         break;
     case 3:
         /* File not found */
-        msg = "File \'";
+        strcat(msg, "File \'");
         strcat(msg, filename);
         strcat(msg, "\' not found");
 
@@ -322,5 +357,11 @@ void cat(char filename[256]) {
         break;
     }
 
-    set_cursor_loc(rw + 1, 0);
+    if (rw + 1 >= 25) {
+        clear_screen();
+    } else {
+        rw++;
+        cl = 0;
+        set_cursor_loc(rw, cl);
+    }
 }
