@@ -237,13 +237,13 @@ void process_command() {
             set_cursor_loc(rw, cl);
         }
     } else if (strcmp(cmd, "cat") == 0) {
-        struct location cursor_loc = {rw + 1, 0};
+        // struct location cursor_loc = {rw + 1, 0};
         set_cursor_loc(rw + 1, 0);
 
-        char arg[MAX_COMMAND_LENGTH];
-        strcpy(arg, buffer[1]);
+        // char arg[MAX_COMMAND_LENGTH];
+        // strcpy(arg, buffer[1]);
 
-        cat(arg, cursor_loc);
+        // cat(arg, cursor_loc);
     } else {
         struct location cursor_loc = {rw + 1, 0};
 
@@ -273,22 +273,22 @@ void reset_command_buffer() {
     strset(state.command_buffer, 0, SHELL_BUFFER_SIZE);
 }
 
-void cat(char filename[256]) {
-    uint8_t rw, cl;
-    get_cursor_loc(rw, cl);
-    struct location cursor_loc = {rw, cl};
+// void cat(char filename[256]) {
+//     uint8_t rw, cl;
+//     get_cursor_loc(rw, cl);
+//     struct location cursor_loc = {rw, cl};
 
-    struct ClusterBuffer buf = {0};
-    struct FAT32DriverRequest req = {
-        .buf                   = &cl,
-        .name                  = "temp",
-        .ext                   = "txt",
-        .parent_cluster_number = ROOT_CLUSTER_NUMBER,
-        .buffer_size           = CLUSTER_SIZE,
-    };
+//     struct ClusterBuffer buf = {0};
+//     struct FAT32DriverRequest req = {
+//         .buf                   = &cl,
+//         .name                  = "temp",
+//         .ext                   = "txt",
+//         .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+//         .buffer_size           = CLUSTER_SIZE,
+//     };
 
-    memcpy(req.name, filename, strlen(filename));
+//     memcpy(req.name, filename, strlen(filename));
 
-    uint8_t stat;
-    read_file(req, stat);   
-}
+//     uint8_t stat;
+//     read_file(req, stat);   
+// }
