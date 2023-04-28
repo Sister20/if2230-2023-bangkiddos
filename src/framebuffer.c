@@ -75,17 +75,8 @@ void printString(char *string, uint8_t row, uint8_t col, uint8_t color) {
 
     while (c != '\0')
     {
-        if (c == '\n') {
-            row ++;
-            col = 0;
-            i ++;
-            c = string[i];
-            continue;
-        }
-
-        framebuffer_write(row, col, c, color, 0x0);
+        framebuffer_write(row, col + i, c, color, 0x0);
         i++;
-        col++;
         c = string[i];
     }
 }
