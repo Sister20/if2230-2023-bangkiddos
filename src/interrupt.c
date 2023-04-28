@@ -145,12 +145,11 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
          * ebx = row
          * ecx = col
         */
-        if (cpu.ebx > 25) {
+        if (cpu.ebx >= 25) {
             framebuffer_clear();
-            framebuffer_set_cursor(1, 0);
+            framebuffer_set_cursor(1, cpu.ecx);
+            return;
         }
-
-
         framebuffer_set_cursor(cpu.ebx, cpu.ecx);
     } else if (cpu.eax == 52) {
         /**

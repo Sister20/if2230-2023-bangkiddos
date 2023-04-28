@@ -374,7 +374,6 @@ void cat(char filename[256]) {
         read_file(req, stat);   
     }
 
-
     char msg[256] = {0};
 
     switch (stat)
@@ -420,11 +419,5 @@ void cat(char filename[256]) {
         break;
     }
 
-    if (rw + 1 >= 25) {
-        clear_screen();
-    } else {
-        rw++;
-        cl = 0;
-        set_cursor_loc(rw, cl);
-    }
+    set_cursor_loc(rw + 1, 0);
 }
