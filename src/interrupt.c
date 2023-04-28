@@ -2,6 +2,7 @@
 #include "lib-header/framebuffer.h"
 #include "lib-header/string.h"
 #include "lib-header/keyboard.h"
+#include "lib-header/fat32.h"
 
 /** 
  * Note for others :
@@ -114,6 +115,21 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
         */
         framebuffer_clear();
         framebuffer_set_cursor(1, 0);
+    }
+
+    /** Commands */
+    else if (cpu.eax == 60) {
+        /**
+         * print current working directory
+         * ecx = location (struct location)
+         * ebx = buffer (ptr to char)
+         * edx = color
+         */
+        // struct location loc = *(struct location *)cpu.ecx;
+        struct FAT32DirectoryTable *dir_table = (struct FAT32DirectoryTable *)cpu.ecx;
+        get_curr_working_dir(cpu.ebx, dir_table);
+
+        // printString(dir, loc.row, loc.col, cpu.edx);
     }
 
     /** String operation */ 

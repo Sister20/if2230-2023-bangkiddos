@@ -259,4 +259,7 @@ bool doesDirHasFiles(uint32_t parent_cluster_number);
 /* Add to directory table */
 void addToDirectory(uint32_t parent_cluster_number, struct FAT32DriverRequest entry, int16_t entry_cluster);
 
+/* Get current directory */
+void get_curr_working_dir(uint32_t cur_cluster, struct FAT32DirectoryTable *dir_table);
+
 #endif

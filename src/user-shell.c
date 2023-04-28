@@ -2,6 +2,7 @@
 #include "lib-header/fat32.h"
 #include "lib-header/string.h"
 #include "lib-header/user-shell.h"
+#include "lib-header/framebuffer.h"
 
 #define strlen(str,lenvar) syscall(80, (uint32_t) str, (uint32_t) &lenvar, 0)
 #define strcat(str1,str2) syscall(83, (uint32_t) str1, (uint32_t) str2, 0)
@@ -11,6 +12,8 @@
 #define set_cursor_loc(rw,cl) syscall(51, rw, cl, 0)
 #define print_to_screen(str,loc,color) syscall(52, (uint32_t) str, (uint32_t) &loc, color)
 #define clear_screen() syscall(53, 0, 0, 0)
+
+#define get_cur_working_dir(cur_working_dir, dir_table) syscall(60, (uint32_t)cur_working_dir, (uint32_t) dir_table, 0)
 
 static struct ShellState state = {
     .working_directory = ROOT_CLUSTER_NUMBER,
@@ -102,7 +105,6 @@ void print_shell_directory() {
 
     state.command_start_location.row = rw;
     state.command_start_location.col = cl;
-
 }
 
 void listen_to_keyboard() {
@@ -174,6 +176,42 @@ void process_command() {
 
     if (strcmp(state.command_buffer, "clear") == 0) {
         clear_screen();
+    } else if (strcmp(state.command_buffer, "ls") == 0) {
+        struct location loc = {rw, 0};
+
+        struct FAT32DirectoryTable dir_table;
+        get_cur_working_dir(state.working_directory, (uint32_t) &dir_table);
+
+        // Iterate through the directory entries and print the names of subdirectories
+        for (int i = 0; i < 64; i++)
+        {
+            if (dir_table.table[i].user_attribute == UATTR_NOT_EMPTY &&
+                dir_table.table[i].attribute == ATTR_SUBDIRECTORY)
+            {
+                char dir_name[9];
+                int j;
+                for (j = 0; j < 8; j++)
+                {
+                    if (dir_table.table[i].name[j] == ' ')
+                    {
+                        break;
+                    }
+                    dir_name[j] = dir_table.table[i].name[j];
+                }
+                dir_name[j] = '\0';
+                // Append the subdirectory name to the buffer
+                loc.row ++;
+                print_to_screen(dir_name, loc, SHELL_COMMAND_COLOR);
+
+                // strcat(dir, dir_name);
+                // strcat(dir, " ");
+            }
+        }
+
+
+        rw = loc.row + 1;
+        cl = 0;
+        set_cursor_loc(rw, cl);
     } else if (strcmp(state.command_buffer, "") == 0) {
         if (rw + 1 >= 25) {
             clear_screen();
@@ -191,7 +229,7 @@ void process_command() {
         cursor_loc.col += cmd_len;
         print_to_screen("\'", cursor_loc, SHELL_COMMAND_COLOR);
         cursor_loc.col += 2;
-        print_to_screen(" is not recognized as an internal command", cursor_loc, SHELL_COMMAND_COLOR);
+        print_to_screen("is not recognized as an internal command", cursor_loc, SHELL_COMMAND_COLOR);
 
         if (rw + 2 >= 25) {
             clear_screen();
