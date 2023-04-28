@@ -174,7 +174,7 @@ void process_command() {
     uint8_t rw, cl;
     get_cursor_loc(rw, cl);
 
-    if (strcmp(state.command_buffer, "clear") == 0) {
+    if (strcmp(state.command_buffer, "clear") == 0 || strcmp(state.command_buffer, "cls") == 0) {
         clear_screen();
     } else if (strcmp(state.command_buffer, "ls") == 0) {
         struct location loc = {rw, 0};
@@ -182,36 +182,7 @@ void process_command() {
         struct FAT32DirectoryTable dir_table;
         get_cur_working_dir(state.working_directory, (uint32_t) &dir_table);
 
-        // Iterate through the directory entries and print the names of subdirectories
-        for (int i = 0; i < 64; i++)
-        {
-            if (dir_table.table[i].user_attribute == UATTR_NOT_EMPTY &&
-                dir_table.table[i].attribute == ATTR_SUBDIRECTORY)
-            {
-                char dir_name[9];
-                int j;
-                for (j = 0; j < 8; j++)
-                {
-                    if (dir_table.table[i].name[j] == ' ')
-                    {
-                        break;
-                    }
-                    dir_name[j] = dir_table.table[i].name[j];
-                }
-                dir_name[j] = '\0';
-                // Append the subdirectory name to the buffer
-                loc.row ++;
-                print_to_screen(dir_name, loc, SHELL_COMMAND_COLOR);
-
-                // strcat(dir, dir_name);
-                // strcat(dir, " ");
-            }
-        }
-
-
-        rw = loc.row + 1;
-        cl = 0;
-        set_cursor_loc(rw, cl);
+        print_cur_working_dir(loc, dir_table);
     } else if (strcmp(state.command_buffer, "") == 0) {
         if (rw + 1 >= 25) {
             clear_screen();
@@ -289,4 +260,30 @@ void reset_command_buffer() {
     state.buffer_index = 0;
     state.buffer_length = 0;
     strset(state.command_buffer, 0, SHELL_BUFFER_SIZE);
+}
+
+void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_table) {
+    // Iterate through the directory entries and print the names of subdirectories
+    for (int i = 1; i < 64; i++) { // not including parent
+        if (dir_table.table[i].user_attribute == UATTR_NOT_EMPTY) {
+            char dir_name[9];
+            int j;
+            for (j = 0; j < 8; j++)
+            {
+                if (dir_table.table[i].name[j] == ' ')
+                {
+                    break;
+                }
+                dir_name[j] = dir_table.table[i].name[j];
+            }
+            dir_name[j] = '\0';
+            loc.row ++;
+            print_to_screen(dir_name, loc, SHELL_COMMAND_COLOR);
+        }
+    }
+
+    uint8_t rw, cl;
+    rw = loc.row + 1;
+    cl = 0;
+    set_cursor_loc(rw, cl);
 }

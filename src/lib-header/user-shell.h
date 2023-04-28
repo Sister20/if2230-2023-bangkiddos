@@ -44,3 +44,5 @@ void listen_to_keyboard();
 void process_command();
 uint8_t strcmp(char * str1, char * str2);
 void reset_command_buffer();
+
+void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_table);
