@@ -215,6 +215,60 @@ void process_command() {
         strcpy(arg, buffer[1]);
 
         cat(arg);
+    } else if (strcmp(cmd, "makedir") == 0) {
+        // struct location cursor_loc = {rw + 1, 0};
+        set_cursor_loc(rw + 1, 0);
+
+        char arg[MAX_COMMAND_LENGTH];
+        strcpy(arg, buffer[1]);
+
+        uint8_t rw, cl;
+        get_cursor_loc(rw, cl);
+        struct location cursor_loc = {rw, cl};
+
+        struct ClusterBuffer res = {0};
+        struct FAT32DriverRequest req = {
+            .buf                   = &res,
+            .name                  = "temp",
+            .ext                   = "uwu",
+            .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+            .buffer_size           = CLUSTER_SIZE,
+        };
+
+        uint8_t arg_len;
+        strlen(arg, arg_len);
+        memcpy(req.name, arg, arg_len);
+        
+        struct FAT32DirectoryTable dir_table;
+        get_cur_working_dir(state.working_directory, (uint32_t) &dir_table);
+
+        // check whether the folder already exists
+        uint8_t stat;
+        read_file(req, stat);   
+
+        print_to_screen(stat, cursor_loc, SHELL_COMMAND_COLOR);
+        // char * msg;
+
+        // switch (stat)
+        // {
+        // case 0:
+        //     /* folder already exists */
+        //     print_to_screen("A folder with the same name already exists", cursor_loc, SHELL_COMMAND_COLOR);
+        //     break;
+        // case 3:
+        //     /* folder doesn't exist, thus make folder */
+        //     msg = "Folder \'";
+        //     strcat(msg, arg);
+        //     strcat(msg, "\' has been made");
+
+        //     print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+        //     break;
+        // default:
+        //     print_to_screen("here", cursor_loc, SHELL_COMMAND_COLOR);
+        //     break;
+        // }
+
+        set_cursor_loc(rw + 1, 0);
     } else {
         struct location cursor_loc = {rw + 1, 0};
 
