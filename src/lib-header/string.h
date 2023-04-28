@@ -49,4 +49,4 @@ void strset(char* str, char c, uint8_t len);
  * @param delim the delimiter
  * @param result the result array
 */
-void strsplit(char* str, char delim, char result[256][16]);
+void strsplit(char* str, char delim, char result[16][256]);

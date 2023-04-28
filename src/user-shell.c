@@ -41,7 +41,20 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
 }
 
 int main(void) {
+    char * amogus_song = "You're a sneaky little impostor!\n"
+"Aren't you?\n"
+"But you're among us!\n"
+"I can feel it!\n"
+"I can feel it in my bones!\n"
+"So why don't you show yourself?\n"
+"And leave us all alone?";
+
     struct ClusterBuffer cl           = {0};
+    
+    uint8_t text_len;
+    strlen(amogus_song, text_len);
+    memcpy(cl.buf, amogus_song, text_len);
+
     struct FAT32DriverRequest request = {
         .buf                   = &cl,
         .name                  = "amogus",
@@ -50,9 +63,10 @@ int main(void) {
         .buffer_size           = CLUSTER_SIZE,
     };
     int32_t retcode;
-    syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
+    write_file(request, retcode);
     if (retcode == 0) {
-        syscall(5, (uint32_t) "owo\n", 4, 0xF);
+        // struct location loc = {12, 0};
+        // print_to_screen("amogus.txt created successfully", loc, SHELL_COMMAND_COLOR);    
     }
 
     print_shell_directory();
@@ -206,13 +220,12 @@ void process_command() {
             set_cursor_loc(rw, cl);
         }
     } else if (strcmp(cmd, "cat") == 0) {
-        // struct location cursor_loc = {rw + 1, 0};
         set_cursor_loc(rw + 1, 0);
 
         // char arg[MAX_COMMAND_LENGTH];
         // strcpy(arg, buffer[1]);
 
-        // cat(arg, cursor_loc);
+        cat(arg);
     } else {
         struct location cursor_loc = {rw + 1, 0};
 
@@ -263,7 +276,55 @@ void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_t
     }
 
     uint8_t rw, cl;
-    rw = loc.row + 1;
-    cl = 0;
-    set_cursor_loc(rw, cl);
+    get_cursor_loc(rw, cl);
+    struct location cursor_loc = {rw, cl};
+
+    struct ClusterBuffer res = {0};
+    struct FAT32DriverRequest req = {
+        .buf                   = &res,
+        .name                  = "temp",
+        .ext                   = "txt",
+        .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+        .buffer_size           = CLUSTER_SIZE,
+    };
+
+    uint8_t arg_len;
+    strlen(filename, arg_len);
+    memcpy(req.name, filename, arg_len);
+
+    uint8_t stat;
+    read_file(req, stat);   
+
+    char * msg;
+
+    switch (stat)
+    {
+    case 0:
+        /* success */
+        print_to_screen(res.buf, cursor_loc, SHELL_COMMAND_COLOR);
+        break;
+    case 1:
+        /* not a file */
+        msg = "\'";
+        strcat(msg, filename);
+        strcat(msg, "\' is not a file");
+        print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+        break;
+    case 2:
+        /* Not enough buffer */
+        print_to_screen("Not enough buffer. File too big!", cursor_loc, SHELL_COMMAND_COLOR);
+        break;
+    case 3:
+        /* File not found */
+        msg = "File \'";
+        strcat(msg, filename);
+        strcat(msg, "\' not found");
+
+        print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+        break;
+    default:
+        break;
+    }
+
+    set_cursor_loc(rw + 1, 0);
 }

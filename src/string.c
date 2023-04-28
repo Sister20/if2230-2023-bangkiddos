@@ -68,7 +68,7 @@ void strset(char* str, char c, uint8_t len){
     str[i] = '\0';
 }
 
-void strsplit(char* str, char delim, char result[256][16]) {
+void strsplit(char* str, char delim, char result[16][256]) {
     int i = 0;
     int j = 0;
     int k = 0;
