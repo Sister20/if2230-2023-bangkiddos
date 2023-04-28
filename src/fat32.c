@@ -322,7 +322,10 @@ int8_t delete(struct FAT32DriverRequest request) {
     read_clusters(&dir, request.parent_cluster_number, 1);
 
     // check if the directory is valid or not, and if it exists or not
-    if (!isDirectoryValid(request.parent_cluster_number) || !isFileOrFolderExists(request.parent_cluster_number, request)) {
+    bool isDirValid = isDirectoryValid(request.parent_cluster_number);
+    bool isFileExists = isFileOrFolderExists(request.parent_cluster_number, request);
+
+    if (!isDirValid || !isFileExists) {
         return 1; // not found
     }
 
@@ -430,18 +433,12 @@ bool isFileOrFolderExists(uint32_t parent_cluster_number, struct FAT32DriverRequ
     /* Check duplication */
     
     // Read directory table
-    read_clusters(&driver_state.dir_table_buf, parent_cluster_number, 1);
-
-    for (int i = 1; i < 64; i++) {
-        if (driver_state.dir_table_buf.table[i].attribute == ATTR_SUBDIRECTORY) {
-            // Check if file or directory name matches
-            if (memcmp(driver_state.dir_table_buf.table[i].name, file_entry.name, 8) == 0 && memcmp(driver_state.dir_table_buf.table[i].ext, file_entry.ext, 3) == 0) {
-                return TRUE;
-            }
-        }
+    int8_t found_idx = dirtable_linear_search(parent_cluster_number, file_entry);
+    if (found_idx != -1) {
+        return TRUE;
+    } else {
+        return FALSE;
     }
-
-    return FALSE;
 }
 
 void addToDirectory(uint32_t parent_cluster_number, struct FAT32DriverRequest entry, int16_t entry_cluster) {

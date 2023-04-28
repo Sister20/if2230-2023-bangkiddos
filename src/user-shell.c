@@ -16,7 +16,7 @@
 #define read_file(request,retcode) syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0)
 #define read_directory(request,retcode) syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0)
 #define write_file(request,retcode) syscall(2, (uint32_t) &request, (uint32_t) &retcode, 0)
-#define delete_file(request,retcode) syscall(3, (uint32_t) &request, (uint32_t) &retcode, 0)
+#define delete(request,retcode) syscall(3, (uint32_t) &request, (uint32_t) &retcode, 0)
 #define memcpy(dest,src,len) syscall(10, (uint32_t) dest, (uint32_t) src, len)
 #define memset(dest,val,len) syscall(11, (uint32_t) dest, (uint32_t) val, len)
 
@@ -58,11 +58,11 @@ int main(void) {
     struct FAT32DriverRequest request = {
         .buf                   = &cl,
         .name                  = "amogus",
-        .ext                   = "\0\0\0",
+        .ext                   = "txt",
         .parent_cluster_number = ROOT_CLUSTER_NUMBER,
         .buffer_size           = CLUSTER_SIZE,
     };
-    int32_t retcode;
+    int8_t retcode;
     write_file(request, retcode);
     if (retcode == 0) {
         // struct location loc = {12, 0};
@@ -221,7 +221,6 @@ void process_command() {
             set_cursor_loc(rw, cl);
         }
     } else if (strcmp(cmd, "cat") == 0) {
-        // struct location cursor_loc = {rw + 1, 0};
         set_cursor_loc(rw + 1, 0);
 
         char arg[MAX_COMMAND_LENGTH];
@@ -291,6 +290,13 @@ void process_command() {
             cl = 0;
             set_cursor_loc(rw, cl);
         }
+    } else if (strcmp(cmd, "rm") == 0) {
+        set_cursor_loc(rw + 1, 0);
+
+        char arg[MAX_COMMAND_LENGTH];
+        strcpy(arg, buffer[1]);
+
+        rm(arg);
     } else {
         struct location cursor_loc = {rw + 1, 0};
 
@@ -346,7 +352,7 @@ void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_t
     set_cursor_loc(rw, cl);
 }
 
-void cat(char filename[256]) {
+void cat(char arg[256]) {
     uint8_t rw, cl;
     get_cursor_loc(rw, cl);
     struct location cursor_loc = {rw, cl};
@@ -361,10 +367,10 @@ void cat(char filename[256]) {
     };
 
     char split_filename[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
-    strsplit(filename, '.', split_filename);
+    strsplit(arg, '.', split_filename);
 
-    strcpy(req.name, split_filename[0]);
-    strcpy(req.ext, split_filename[1]);
+    memcpy(req.name, split_filename[0], 8);
+    memcpy(req.ext, split_filename[1], 3);
 
     uint8_t stat;
 
@@ -399,7 +405,7 @@ void cat(char filename[256]) {
     case 1:
         /* not a file */
         strcat(msg, "\'");
-        strcat(msg, filename);
+        strcat(msg, arg);
         strcat(msg, "\' is not a file");
         print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
         break;
@@ -410,10 +416,71 @@ void cat(char filename[256]) {
     case 3:
         /* File not found */
         strcat(msg, "File \'");
-        strcat(msg, filename);
+        strcat(msg, arg);
         strcat(msg, "\' not found");
 
         print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+        break;
+    default:
+        break;
+    }
+
+    set_cursor_loc(rw + 1, 0);
+}
+
+void rm(char arg[256]) {
+    uint8_t rw, cl;
+    get_cursor_loc(rw, cl);
+    struct location cursor_loc = {rw, cl};
+
+    struct ClusterBuffer res = {0};
+    struct FAT32DriverRequest req = {
+        .buf                   = &res,
+        .name                  = "\0\0\0\0",
+        .ext                   = "\0\0\0",
+        .parent_cluster_number = state.working_directory,
+        .buffer_size           = CLUSTER_SIZE,
+    };
+
+    char split_filename[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+    strsplit(arg, '.', split_filename);
+
+    memcpy(req.name, split_filename[0], 8);
+    memcpy(req.ext, split_filename[1], 3);
+
+    uint8_t stat;
+
+    if (req.name[0] == '\0') {
+        stat = 1;
+    } else {
+        delete(req, stat);   
+    }
+
+    char msg[256] = {0};
+
+    switch (stat)
+    {
+    case 0:
+        /* success */
+        strcat(msg, "File/folder \'");
+        strcat(msg, arg);
+        strcat(msg, "\' deleted");
+
+        print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+        break;
+    case 1:
+        /* File not found */
+        strcat(msg, "File \'");
+        strcat(msg, arg);
+        strcat(msg, "\' not found");
+
+        print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+        break;
+    case 2:
+        /* Folder is not empty */
+        strcat(msg, "Folder \'");
+        strcat(msg, arg);
+        strcat(msg, "\' is not empty. Can't delete directly.");
         break;
     default:
         break;
