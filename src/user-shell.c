@@ -41,20 +41,7 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
 }
 
 int main(void) {
-    char * amogus_song = "You're a sneaky little impostor!\n"
-"Aren't you?\n"
-"But you're among us!\n"
-"I can feel it!\n"
-"I can feel it in my bones!\n"
-"So why don't you show yourself?\n"
-"And leave us all alone?";
-
     struct ClusterBuffer cl           = {0};
-    
-    uint8_t text_len;
-    strlen(amogus_song, text_len);
-    memcpy(cl.buf, amogus_song, text_len);
-
     struct FAT32DriverRequest request = {
         .buf                   = &cl,
         .name                  = "amogus",
@@ -63,10 +50,9 @@ int main(void) {
         .buffer_size           = CLUSTER_SIZE,
     };
     int32_t retcode;
-    write_file(request, retcode);
+    syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
     if (retcode == 0) {
-        // struct location loc = {12, 0};
-        // print_to_screen("amogus.txt created successfully", loc, SHELL_COMMAND_COLOR);    
+        syscall(5, (uint32_t) "owo\n", 4, 0xF);
     }
 
     print_shell_directory();
@@ -222,12 +208,13 @@ void process_command() {
             set_cursor_loc(rw, cl);
         }
     } else if (strcmp(cmd, "cat") == 0) {
+        // struct location cursor_loc = {rw + 1, 0};
         set_cursor_loc(rw + 1, 0);
 
         char arg[MAX_COMMAND_LENGTH];
         strcpy(arg, buffer[1]);
 
-        cat(arg);
+        // cat(arg, cursor_loc);
     } else {
         struct location cursor_loc = {rw + 1, 0};
 
