@@ -212,7 +212,7 @@ void process_command() {
     } else if (strcmp(cmd, "cd") == 0) {
         set_cursor_loc(rw + 1, 0);
 
-        char arg[MAX_COMMAND_LENGTH];
+        char arg[MAX_COMMAND_LENGTH] = {0};
         strcpy(arg, buffer[1]);
 
         struct FAT32DirectoryTable dir_table;
@@ -251,7 +251,7 @@ void process_command() {
     } else if (strcmp(cmd, "cat") == 0) {
         set_cursor_loc(rw + 1, 0);
 
-        char arg[MAX_COMMAND_LENGTH];
+        char arg[MAX_COMMAND_LENGTH] = {0};
         strcpy(arg, buffer[1]);
 
         cat(arg);
@@ -260,7 +260,7 @@ void process_command() {
 
         struct location loc = {rw + 1, 0};
 
-        char arg[MAX_COMMAND_LENGTH];
+        char arg[MAX_COMMAND_LENGTH] = {0};
         strcpy(arg, buffer[1]);
 
         uint8_t paths_found = 0;
@@ -293,7 +293,7 @@ void process_command() {
     } else if (strcmp(cmd, "mkdir") == 0) {
         set_cursor_loc(rw + 1, 0);
 
-        char arg[MAX_COMMAND_LENGTH];
+        char arg[MAX_COMMAND_LENGTH] = {0};
 
         // handle input where the folder name has spaces
         int i = 1;
@@ -345,7 +345,7 @@ void process_command() {
     } else if (strcmp(cmd, "rm") == 0) {
         set_cursor_loc(rw + 1, 0);
 
-        char arg[MAX_COMMAND_LENGTH];
+        char arg[MAX_COMMAND_LENGTH] = {0};
         strcpy(arg, buffer[1]);
 
         rm(arg);
