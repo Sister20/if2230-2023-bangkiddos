@@ -14,7 +14,7 @@
 
 /* -- IF2230 File System constants -- */
 #define BOOT_SECTOR           0
-#define CLUSTER_BLOCK_COUNT   16
+#define CLUSTER_BLOCK_COUNT   4
 #define CLUSTER_SIZE          (BLOCK_SIZE*CLUSTER_BLOCK_COUNT)
 #define CLUSTER_MAP_SIZE      512
 

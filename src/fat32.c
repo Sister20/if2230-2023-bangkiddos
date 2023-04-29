@@ -283,7 +283,7 @@ int8_t write(struct FAT32DriverRequest request) {
             write_clusters(&temp, i, 1);
             break;
         } else {
-            struct ClusterBuffer temp[5] = {0};
+            struct ClusterBuffer temp[CLUSTER_MAP_SIZE] = {0};
             memcpy(temp, request.buf, request.buffer_size);
 
             write_clusters(temp->buf + count * CLUSTER_SIZE, i, 1);
