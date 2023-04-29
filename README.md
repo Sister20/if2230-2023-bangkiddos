@@ -59,4 +59,4 @@ sudo apt install gcc nasm make qemu-system-x86 genisoimage
 ## Milestone
 - [x] Milestone1
 - [x] Milestone2
-- [x] MilestoneX
+- [x] Milestone3
