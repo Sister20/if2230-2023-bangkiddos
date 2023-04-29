@@ -1,6 +1,6 @@
 # bangkiddOS
 
-![Welcome to BangkiddOS!](osGIF.gif)
+![Welcome to BangkiddOS!](ososooss.gif)
 
 ## Made by
 
