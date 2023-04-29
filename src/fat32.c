@@ -62,16 +62,6 @@ void init_directory_table(struct FAT32DirectoryTable *dir_table, char *name, uin
     dir_table->table[0].create_time = t.hour << 8 | t.minute;
     dir_table->table[0].create_date = t.year << 9 | t.month << 5 | t.day;
     dir_table->table[0].access_date = t.year << 9 | t.month << 5 | t.day;
-
-    // using time.h
-    // struct tm *t;
-    // time_t now;
-
-    // now = time(NULL);
-    // t = localtime(&now);
-    // dir_table->table[0].create_time = (t->tm_hour << 8) | t->tm_min;
-    // dir_table->table[0].create_date = ((t->tm_year + 1900) << 9) | ((t->tm_mon + 1) << 5) | t->tm_mday;
-    // dir_table->table[0].access_date = dir_table->table[0].create_date;
 }
 
 bool is_empty_storage(void) {
@@ -91,7 +81,7 @@ void create_fat32(void) {
 
     // Initialize DirectoryTable
     struct FAT32DirectoryTable dir_table = {0};
-    init_directory_table(&dir_table, "root\0\0\0", 0);
+    init_directory_table(&dir_table, "root\0\0\0", ROOT_CLUSTER_NUMBER);
     write_clusters(&dir_table, 2, 1);
 }
 
@@ -143,14 +133,6 @@ int8_t read_directory(struct FAT32DriverRequest request) {
     cmos_read_rtc(&t);
     entry.access_date = t.year << 9 | t.month << 5 | t.day;
 
-    // using time.h
-    // struct tm *t;
-    // time_t now;
-
-    // now = time(NULL);
-    // t = localtime(&now);
-    // entry.access_date = ((t->tm_year + 1900) << 9) | ((t->tm_mon + 1) << 5) | t->tm_mday;
-
     read_clusters(request.buf, entry_cluster, 1);
 
     return 0; // Return success code
@@ -196,13 +178,6 @@ int8_t read(struct FAT32DriverRequest request) {
     cmos_read_rtc(&t);
     entry.access_date = t.year << 9 | t.month << 5 | t.day;
     
-    // using time.h
-    // struct tm *t;
-    // time_t now;
-
-    // now = time(NULL);
-    // t = localtime(&now);
-    // entry.access_date = ((t->tm_year + 1900) << 9) | ((t->tm_mon + 1) << 5) | t->tm_mday;
 
     // loop until eof
     do {
@@ -269,16 +244,6 @@ int8_t write(struct FAT32DriverRequest request) {
             temp.table->create_time = t.hour << 8 | t.minute;
             temp.table->create_date = t.year << 9 | t.month << 5 | t.day;
             temp.table->access_date = t.year << 9 | t.month << 5 | t.day;
-
-            // using time.h
-            // struct tm *t;
-            // time_t now;
-
-            // now = time(NULL);
-            // t = localtime(&now);
-            // dir_table->table[0].create_time = (t->tm_hour << 8) | t->tm_min;
-            // dir_table->table[0].create_date = ((t->tm_year + 1900) << 9) | ((t->tm_mon + 1) << 5) | t->tm_mday;
-            // dir_table->table[0].access_date = dir_table->table[0].create_date;
 
             write_clusters(&temp, i, 1);
             break;
@@ -469,20 +434,10 @@ void addToDirectory(uint32_t parent_cluster_number, struct FAT32DriverRequest en
             driver_state.dir_table_buf.table[i].create_date = t.year << 9 | t.month << 5 | t.day;
             driver_state.dir_table_buf.table[i].access_date = t.year << 9 | t.month << 5 | t.day;
 
-            // using time.h
-            // struct tm *t;
-            // time_t now;
-
-            // now = time(NULL);
-            // t = localtime(&now);
-            // dir_table->table[0].create_time = (t->tm_hour << 8) | t->tm_min;
-            // dir_table->table[0].create_date = ((t->tm_year + 1900) << 9) | ((t->tm_mon + 1) << 5) | t->tm_mday;
-            // dir_table->table[0].access_date = dir_table->table[0].create_date;
-
             memcpy(driver_state.dir_table_buf.table[i].name,entry.name,8); 
             driver_state.dir_table_buf.table[i].filesize = entry.buffer_size; 
-            driver_state.dir_table_buf.table[i].modified_date = 0; 
-            driver_state.dir_table_buf.table[i].modified_time = 0; 
+            driver_state.dir_table_buf.table[i].modified_date = driver_state.dir_table_buf.table[i].access_date;
+            driver_state.dir_table_buf.table[i].modified_time = driver_state.dir_table_buf.table[i].create_time;
             driver_state.dir_table_buf.table[i].undelete = 0; 
             driver_state.dir_table_buf.table[i].user_attribute = UATTR_NOT_EMPTY; 
             break; 

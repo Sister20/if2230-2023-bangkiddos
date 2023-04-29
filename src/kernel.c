@@ -128,7 +128,8 @@ void kernel_setup(void) {
     // move parent to f1
     memcpy(req.name, "f1", 2);
     int8_t idx = dirtable_linear_search(ROOT_CLUSTER_NUMBER, req);
-    struct FAT32DirectoryTable dirtable; get_curr_working_dir(ROOT_CLUSTER_NUMBER, &dirtable);
+    struct FAT32DirectoryTable dirtable; 
+    get_curr_working_dir(ROOT_CLUSTER_NUMBER, &dirtable);
     struct FAT32DirectoryEntry f1 = dirtable.table[idx];
     uint32_t f1_cluster_nm = f1.cluster_high << 16 | f1.cluster_low;
 

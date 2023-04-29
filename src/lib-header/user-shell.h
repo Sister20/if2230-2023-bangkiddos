@@ -56,3 +56,7 @@ void cat(char arg[256]);
 void rm(char arg[256]);
 void mv(char src[256], char dest[256]);
 void whereis(uint32_t cluster_number, char arg[256], char paths[16][256], uint8_t * paths_count);
+
+void int_to_str(int num, char str[]);
+void get_date(uint16_t date, char *date_created);
+void get_time(uint16_t time, char *time_str);
