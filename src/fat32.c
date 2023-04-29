@@ -131,7 +131,7 @@ int8_t read_directory(struct FAT32DriverRequest request) {
     struct FAT32DirectoryEntry entry = driver_state.dir_table_buf.table[foundIndex];
 
     // If not a folder
-    if (entry.attribute == ATTR_SUBDIRECTORY) { 
+    if (entry.attribute != ATTR_SUBDIRECTORY) { 
         return 1;
     }
 

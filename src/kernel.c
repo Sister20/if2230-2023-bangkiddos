@@ -126,7 +126,13 @@ void kernel_setup(void) {
     write(req);
 
     // move parent to f1
-    req.parent_cluster_number = 0x8;
+    memcpy(req.name, "f1", 2);
+    int8_t idx = dirtable_linear_search(ROOT_CLUSTER_NUMBER, req);
+    struct FAT32DirectoryTable dirtable; get_curr_working_dir(ROOT_CLUSTER_NUMBER, &dirtable);
+    struct FAT32DirectoryEntry f1 = dirtable.table[idx];
+    uint32_t f1_cluster_nm = f1.cluster_high << 16 | f1.cluster_low;
+
+    req.parent_cluster_number = f1_cluster_nm;
 
     memcpy(req.name, "f4", 2);
     write(req);

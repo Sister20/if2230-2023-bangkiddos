@@ -111,7 +111,18 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
         } else if (keyboard.last_char == '\n') {
             clear_buffer();
         }
+    } else if (cpu.eax == 5) {
+        /** 
+         * dirtable linear search
+         * ebx = parent cluster number
+         * ecx = ptr to FAT32DriverRequest
+         * edx = ptr to return value
+        */
+
+        struct FAT32DriverRequest request = *(struct FAT32DriverRequest *) cpu.ecx;
+        *((int8_t *) cpu.edx) = dirtable_linear_search((uint32_t) cpu.ebx, request);
     } 
+
     /** Memory management */
     else if (cpu.eax == 10) {
         /**
