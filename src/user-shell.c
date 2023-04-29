@@ -45,12 +45,12 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
 
 int main(void) {
     char * amogus_song = "You're a sneaky little impostor!\n"
-"Aren't you?\n"
-"But you're among us!\n"
-"I can feel it!\n"
-"I can feel it in my bones!\n"
-"So why don't you show yourself?\n"
-"And leave us all alone?";
+        "Aren't you?\n"
+        "But you're among us!\n"
+        "I can feel it!\n"
+        "I can feel it in my bones!\n"
+        "So why don't you show yourself?\n"
+        "And leave us all alone?";
 
     struct ClusterBuffer cl           = {0};
     
@@ -241,65 +241,23 @@ void process_command() {
         set_cursor_loc(rw + 1, 0);
 
         char arg[MAX_COMMAND_LENGTH];
-        strcpy(arg, buffer[1]);
 
-        uint8_t rw, cl;
-        get_cursor_loc(rw, cl);
-        struct location cursor_loc = {rw, cl};
-
-        struct ClusterBuffer res = {0};
-        struct FAT32DriverRequest req = {
-            .buf                   = &res,
-            .name                  = "\0\0\0\0",
-            .ext                   = "\0\0\0",
-            .parent_cluster_number = state.working_directory,
-            .buffer_size           = CLUSTER_SIZE,
-        };
-
-        char split_filename[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
-
-        strsplit(arg, '.', split_filename);
-        strcpy(req.name, split_filename[0]);
-        strcpy(req.ext, split_filename[1]);
-
-        // check whether the folder already exists
-        uint8_t stat;
-        if (req.name[0] == '\0') {
-            stat = 3;
-        } else {
-            read_file(req, stat);   
+        // handle input where the folder name has spaces
+        int i = 1;
+        strcpy(arg, buffer[i]);
+        i++;   
+        while (TRUE) {
+            if (strcmp(buffer[i], "") == 0) {
+                break;
+            }
+            strcat(arg, " ");
+            strcat(arg, buffer[i]);
+            i++;
         }
 
-        char msg[256] = {0};
-
-        switch (stat)
-        {
-        case 0:
-            /* folder already exists */
-            print_to_screen("A folder with the same name already exists", cursor_loc, SHELL_COMMAND_COLOR);
-            break;
-        case 3:
-            /* folder doesn't exist, thus make folder */
-            strcat(msg, "Folder \'");
-            strcat(msg, arg);
-            strcat(msg, "\' has been made");
-
-            uint8_t writeStat;
-            write_file(req, writeStat);
-
-            print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
-            break;
-        default:
-            break;
-        }
-
-        if (rw + 1 >= 25) {
-            clear_screen();
-        } else {
-            rw++;
-            cl = 0;
-            set_cursor_loc(rw, cl);
-        }
+        mkdir(arg);
+    } else if (strcmp(cmd, "cp") == 0) {
+        
     } else if (strcmp(cmd, "rm") == 0) {
         set_cursor_loc(rw + 1, 0);
 
@@ -555,4 +513,70 @@ void rm(char arg[256]) {
     }
 
     set_cursor_loc(rw + 1, 0);
+}
+
+void mkdir(char arg[256]) {
+    uint8_t rw, cl;
+    get_cursor_loc(rw, cl);
+    struct location cursor_loc = {rw, cl};
+
+    struct ClusterBuffer res = {0};
+    struct FAT32DriverRequest req = {
+        .buf                   = &res,
+        .name                  = "\0\0\0\0",
+        .ext                   = "\0\0\0",
+        .parent_cluster_number = state.working_directory,
+        .buffer_size           = CLUSTER_SIZE,
+    };
+
+    strncpy(req.name, arg, 8);
+
+    // check if the name is not an empty string
+    if (strcmp(arg, "") == 0) {
+        print_to_screen("Folder name can't be empty", cursor_loc, SHELL_COMMAND_COLOR);
+    } else {
+        // check whether the folder already exists
+        uint8_t stat;
+        if (req.name[0] == '\0') {
+            stat = 3;
+        } else {
+            read_file(req, stat);   
+        }
+
+        char msg[256] = {0};
+
+        switch (stat)
+        {
+        case 0:
+            /* folder already exists */
+            print_to_screen("A folder with the same name already exists", cursor_loc, SHELL_COMMAND_COLOR);
+            break;
+        case 3:
+            /* folder doesn't exist, thus make folder */
+            char temp[8];
+            strncpy(temp, arg, 8);
+            strcat(msg, "Folder \'");
+            strcat(msg, temp);
+            strcat(msg, "\' has been made");
+
+            uint8_t writeStat;
+            write_file(req, writeStat);
+
+            print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+            break;
+        default:
+            break;
+        }
+    }
+    if (rw + 1 >= 25) {
+        clear_screen();
+    } else {
+        rw++;
+        cl = 0;
+        set_cursor_loc(rw, cl);
+    }
+}
+
+void cp(char arg[256]) {
+
 }

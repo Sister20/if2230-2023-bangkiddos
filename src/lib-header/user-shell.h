@@ -54,3 +54,5 @@ void change_dir(char path[256], struct FAT32DirectoryTable dir_table);
 void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_table);
 void cat(char arg[256]);
 void rm(char arg[256]);
+void mkdir(char arg[256]);
+void cp(char arg[256]);
