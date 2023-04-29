@@ -280,27 +280,40 @@ void process_command() {
 
         // handle input where the folder name has spaces
         int i = 1;
+        uint8_t text_len;
         strcpy(arg, buffer[i]);
-        i++;
-
-        while (TRUE) {
-            if (strcmp(buffer[i], "") == 0) {
-                break;
-            }
-            i++;
-        }
-
-        if (i == 2) { // the input is valid
-            mkdir(arg);
-        } else {
+        strlen(buffer[i], text_len);
+        if (text_len >= 8) {
             uint8_t rw, cl;
             get_cursor_loc(rw, cl);
             struct location cursor_loc = {rw, cl};
-
-            print_to_screen("Foldername can't contain spaces", cursor_loc, SHELL_COMMAND_COLOR);
+            print_to_screen("Foldername is too long", cursor_loc, SHELL_COMMAND_COLOR);
             cursor_loc.row++;
             set_cursor_loc(cursor_loc.row + 1, 0);
             set_cursor_loc(cursor_loc.row + 1, 0);
+
+        } else {
+            i++;
+
+            while (TRUE) {
+                if (strcmp(buffer[i], "") == 0) {
+                    break;
+                }
+
+                i++;
+            }
+
+            if (i == 2) { // the input is valid
+                mkdir(arg);
+            } else {
+                uint8_t rw, cl;
+                get_cursor_loc(rw, cl);
+                struct location cursor_loc = {rw, cl};
+                print_to_screen("Foldername can't contain spaces", cursor_loc, SHELL_COMMAND_COLOR);
+                cursor_loc.row++;
+                set_cursor_loc(cursor_loc.row + 1, 0);
+                set_cursor_loc(cursor_loc.row + 1, 0);
+            }
         }
     } else if (strcmp(cmd, "cp") == 0) {
         set_cursor_loc(rw + 1, 0);
@@ -693,7 +706,7 @@ void rm(char arg[256]) {
         strcat(msg, "File/folder \'");
         strcat(msg, arg);
         strcat(msg, "\' deleted");
-
+    
         print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
         break;
     case 1:
@@ -740,7 +753,7 @@ void mv(char src[256], char dest[256]) {
         .name                  = "\0\0\0\0",
         .ext                   = "\0\0\0",
         .parent_cluster_number = state.working_directory,
-        .buffer_size           = 0,
+        .buffer_size           = CLUSTER_SIZE,
     };
 
     /* Looking up the src file/folder ------------------- */
@@ -800,7 +813,7 @@ void mv(char src[256], char dest[256]) {
         .name                  = "\0\0\0\0",
         .ext                   = "\0\0\0",
         .parent_cluster_number = state.working_directory,
-        .buffer_size           = 0,
+        .buffer_size           = CLUSTER_SIZE,
     };
 
     uint32_t target_dir = state.working_directory;
@@ -922,7 +935,7 @@ void mv(char src[256], char dest[256]) {
 
         
     } else {
-        req.buffer_size = 512;
+        // find the proper buffer_size
 
         read_file(req, stat);
 
@@ -938,9 +951,9 @@ void mv(char src[256], char dest[256]) {
             return;
         }
 
-        delete(req, stat);
-
-        target_req.buffer_size = 512;
+        uint32_t properSize;
+        strlen(req.buf, properSize);
+        target_req.buffer_size = properSize;
         memcpy(target_req.buf, req.buf, 512);
 
         if (target_req.ext[0] != '\0') {
@@ -957,6 +970,7 @@ void mv(char src[256], char dest[256]) {
                 print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
                 cursor_loc.row++;
                 set_cursor_loc(cursor_loc.row + 1, 0);
+                delete(req, stat);
             }
 
         } else {
@@ -970,6 +984,18 @@ void mv(char src[256], char dest[256]) {
                 strcat(msg, "File \'");
                 strcat(msg, src);
                 strcat(msg, "\' moved to \'");
+                strcat(msg, dest);
+                strcat(msg, "\'");
+
+                print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+                cursor_loc.row++;
+                set_cursor_loc(cursor_loc.row + 1, 0);
+                delete(req, stat);
+            } else {
+                char msg[256] = {0};
+                strcat(msg, "File \'");
+                strcat(msg, src);
+                strcat(msg, "\' failed to be moved to \'");
                 strcat(msg, dest);
                 strcat(msg, "\'");
 
@@ -1076,6 +1102,7 @@ void mkdir(char arg[256]) {
         .parent_cluster_number = state.working_directory,
         .buffer_size           = 0,
     };
+
     strncpy(req.name, arg, 8);
 
     // check if the name is not an empty string
@@ -1143,7 +1170,7 @@ void cp(char src[256], char dest[256]) {
         .name                  = "\0\0\0\0",
         .ext                   = "\0\0\0",
         .parent_cluster_number = state.working_directory,
-        .buffer_size           = 0,
+        .buffer_size           = CLUSTER_SIZE,
     };
 
     // look for the src file/folder
@@ -1201,7 +1228,7 @@ void cp(char src[256], char dest[256]) {
         .name                  = "\0\0\0\0",
         .ext                   = "\0\0\0",
         .parent_cluster_number = state.working_directory,
-        .buffer_size           = 0,
+        .buffer_size           = CLUSTER_SIZE,
     };
 
     uint32_t target_dir = state.working_directory;
@@ -1262,7 +1289,7 @@ void cp(char src[256], char dest[256]) {
         set_cursor_loc(cursor_loc.row + 1, 0);
         return; 
     } else {
-        req.buffer_size = 512;
+        // find the proper buffer_size
 
         read_file(req, stat);
 
@@ -1278,7 +1305,9 @@ void cp(char src[256], char dest[256]) {
             return;
         }
 
-        target_req.buffer_size = 512;
+        uint32_t properSize;
+        strlen(req.buf, properSize);
+        target_req.buffer_size = properSize;
         memcpy(target_req.buf, req.buf, 512);
 
         if (target_req.ext[0] != '\0') { // copy to another file
@@ -1306,6 +1335,17 @@ void cp(char src[256], char dest[256]) {
                 strcat(msg, "File \'");
                 strcat(msg, src);
                 strcat(msg, "\' copied to folder \'");
+                strcat(msg, dest);
+                strcat(msg, "\'");
+
+                print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+                cursor_loc.row++;
+                set_cursor_loc(cursor_loc.row + 1, 0);
+            } else {
+                char msg[256] = {0};
+                strcat(msg, "File \'");
+                strcat(msg, src);
+                strcat(msg, "\' failed to be copied to folder \'");
                 strcat(msg, dest);
                 strcat(msg, "\'");
 
