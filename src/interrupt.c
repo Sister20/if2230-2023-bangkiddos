@@ -52,11 +52,12 @@ void pic_remap(void) {
 }
 /* End of PIC Remapping Section */
 
-
 struct location {
     uint8_t row;
     uint8_t col;
 };
+
+uint32_t tick = 0;
 
 /* System Calls */
 void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptStack info) {
@@ -191,6 +192,16 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
         get_curr_working_dir(cpu.ebx, dir_table);
     }
 
+    else if (cpu.eax == 69) {
+        *((int *)cpu.ebx) = tick;
+    }
+
+    else if (cpu.eax == 70) {
+        struct location loc = *(struct location *)cpu.ebx;
+
+        printBlock(loc.row, loc.col, cpu.ecx, cpu.edx);
+    }
+
     /** String operation */ 
     else if (cpu.eax == 80) {
         /**
@@ -258,6 +269,7 @@ void main_interrupt_handler(
             keyboard_isr();
             break;
         case 0x30:
+            tick++;
             syscall(cpu, info);
             break;
         default:

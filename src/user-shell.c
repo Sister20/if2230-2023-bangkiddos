@@ -25,6 +25,9 @@
 
 #define get_cur_working_dir(cur_working_dir, dir_table) syscall(60, (uint32_t)cur_working_dir, (uint32_t) dir_table, 0)
 
+#define get_cur_tick(cur_tick) syscall(69, (uint32_t)&cur_tick, 0, 0)
+#define print_block(loc, n, color) syscall(70, (uint32_t) &loc, (uint32_t) n, color)
+
 static struct ShellState state = {
     .working_directory = ROOT_CLUSTER_NUMBER,
     .command_buffer    = {0},
@@ -223,6 +226,20 @@ void process_command() {
         get_cur_working_dir(state.working_directory, (uint32_t) &dir_table);
 
         print_cur_working_dir(loc, dir_table);
+    } else if (strcmp(cmd, "amongus") == 0) {
+        struct location loc = {rw, cl};
+        amongus(loc);
+
+        rw = loc.row + 15;
+        cl = 0;
+        set_cursor_loc(rw, cl);
+    } else if (strcmp(cmd, "pikachu") == 0) {
+        struct location loc = {rw, cl};
+        pikachu(loc);
+
+        rw = loc.row + 15;
+        cl = 0;
+        set_cursor_loc(rw, cl);
     } else if (strcmp(cmd, "") == 0) {
         if (rw + 1 >= 25) {
             clear_screen();
@@ -333,7 +350,7 @@ void process_command() {
 
         rm(arg);
     } else {
-        struct location cursor_loc = {rw + 1, 0};
+        struct location cursor_loc = {rw + 2, 0};
 
         print_to_screen("\'", cursor_loc, SHELL_COMMAND_COLOR);
         cursor_loc.col += 1;
@@ -344,10 +361,10 @@ void process_command() {
         print_to_screen("is not recognized as an internal command", cursor_loc, SHELL_COMMAND_COLOR);
 
 
-        if (rw + 3 >= 25) {
+        if (rw + 4 >= 25) {
             clear_screen();
         } else {
-            rw += 3;
+            rw += 4;
             cl = 0;
             set_cursor_loc(rw, cl);
         }
@@ -467,7 +484,7 @@ void change_dir(char path[256], struct FAT32DirectoryTable dir_table)
         strcat(exception, "cd: ");
         strcat(exception, path);
         strcat(exception, ": No such file or directory");
-        print_to_screen(exception, loc, 0x4);
+        print_to_screen(exception, loc, SHELL_COMMAND_COLOR);
         loc.row++;
     }
 
@@ -1103,7 +1120,9 @@ void mkdir(char arg[256]) {
         .buffer_size           = 0,
     };
 
-    strncpy(req.name, arg, 8);
+    uint32_t properSize;
+    strlen(arg, properSize);
+    strncpy(req.name, arg, properSize);
 
     // check if the name is not an empty string
     if (strcmp(arg, "") == 0) {
@@ -1431,4 +1450,124 @@ void get_time(uint16_t time, char*time_str) {
     strcat(time_str, hour_str);
     strcat(time_str, ":");
     strcat(time_str, min_str);
+}
+
+void amongus(struct location loc) {
+    loc.row = 3;
+    loc.col = 8;
+
+    print_block(loc, 7, 0xF); loc.row ++;
+    loc.col = 7; print_block(loc, 2, 0xF); loc.col = 9; print_block(loc, 7, 0x4); loc.col = 15; print_block(loc, 1, 0xF); loc.row ++;
+    loc.col = 7; print_block(loc, 2, 0xF); loc.col = 9; print_block(loc, 3, 0x4); loc.col = 12; print_block(loc, 5, 0xF); loc.row ++;
+    loc.col = 6; print_block(loc, 2, 0xF); loc.col = 8; print_block(loc, 3, 0x4); loc.col = 11; print_block(loc, 1, 0xF); loc.col = 12; print_block(loc, 4, 0x3); loc.col = 16; print_block(loc, 1, 0xF); loc.row ++;
+    loc.col = 5; print_block(loc, 3, 0xF); loc.col = 8; print_block(loc, 3, 0x4); loc.col = 11; print_block(loc, 1, 0xF); loc.col = 12; print_block(loc, 4, 0x3); loc.col = 16; print_block(loc, 1, 0xF); loc.row ++;
+    loc.col = 5; print_block(loc, 1, 0xF); loc.col = 6; print_block(loc, 1, 0x4); loc.col = 7; print_block(loc, 1, 0xF); loc.col = 8; print_block(loc, 4, 0x4); loc.col = 12; print_block(loc, 4, 0xF); loc.row ++;
+    loc.col = 5; print_block(loc, 1, 0xF); loc.col = 6; print_block(loc, 1, 0x4); loc.col = 7; print_block(loc, 1, 0xF); loc.col = 8; print_block(loc, 7, 0x4); loc.col = 15; print_block(loc, 1, 0xF); loc.row ++;
+    loc.col = 5; print_block(loc, 1, 0xF); loc.col = 6; print_block(loc, 1, 0x4); loc.col = 7; print_block(loc, 1, 0xF); loc.col = 8; print_block(loc, 7, 0x4); loc.col = 15; print_block(loc, 1, 0xF); loc.row ++;
+    loc.col = 5; print_block(loc, 3, 0xF); loc.col = 8; print_block(loc, 7, 0x4); loc.col = 15; print_block(loc, 1, 0xF); loc.row ++;
+    loc.col = 7; print_block(loc, 1, 0xF); loc.col = 8; print_block(loc, 3, 0x4); loc.col = 11; print_block(loc, 1, 0xF); loc.col = 12; print_block(loc, 3, 0x4); loc.col = 15; print_block(loc, 1, 0xF); loc.row ++;
+    loc.col = 7; print_block(loc, 2, 0xF); loc.col = 9; print_block(loc, 2, 0x4); loc.col = 11; print_block(loc, 1, 0xF); loc.col = 12; print_block(loc, 3, 0x4); loc.col = 15; print_block(loc, 1, 0xF); loc.row ++;
+    loc.col = 8; print_block(loc, 3, 0xF); loc.col = 12; print_block(loc, 3, 0xF); loc.row ++;
+
+    loc.row -= 10;
+    loc.col = 20;
+
+    delay(1000000);
+
+    print_to_screen("  ___ ", loc, 0xF); loc.row ++;
+    print_to_screen(" / __|", loc, 0xF); loc.row ++;
+    print_to_screen("| (__ ", loc, 0xF); loc.row ++;
+    print_to_screen(" \\___|", loc, 0xF); loc.row ++;
+
+    loc.row -= 4;
+    loc.col += 7;
+    delay(1000000);
+
+    print_to_screen("  __ _ ", loc, 0xF); loc.row ++;
+    print_to_screen(" / _` |", loc, 0xF); loc.row ++;
+    print_to_screen("| (_| |", loc, 0xF); loc.row ++;
+    print_to_screen(" \\__,_|", loc, 0xF); loc.row ++;
+
+    loc.row -= 4;
+    loc.col += 8;
+    delay(1000000);
+
+    print_to_screen(" _ __  ", loc, 0xF); loc.row ++;
+    print_to_screen("| '_ \\ ", loc, 0xF); loc.row ++;
+    print_to_screen("| |_) |", loc, 0xF); loc.row ++;
+    print_to_screen("| .__/ ", loc, 0xF); loc.row ++;
+    print_to_screen("|_|    ", loc, 0xF); loc.row ++;
+
+    loc.row -= 5;
+    loc.col += 8;
+    delay(1000000);
+
+    print_to_screen("  ___ ", loc, 0xF); loc.row ++;
+    print_to_screen(" / _ \\", loc, 0xF); loc.row ++;
+    print_to_screen("|  __/", loc, 0xF); loc.row ++;
+    print_to_screen(" \\___|", loc, 0xF); loc.row ++;
+
+    loc.row -= 5;
+    loc.col += 7;
+    delay(1000000);
+
+    print_to_screen(" _    ", loc, 0xF); loc.row ++;
+    print_to_screen("| | __", loc, 0xF); loc.row ++;
+    print_to_screen("| |/ /", loc, 0xF); loc.row ++;
+    print_to_screen("|   < ", loc, 0xF); loc.row ++;
+    print_to_screen("|_|\\_\\", loc, 0xF); loc.row ++;
+    delay(1000000);
+}
+
+void pikachu(struct location loc) {
+    loc.row = 3;
+    loc.col = 4;
+
+    print_to_screen("       ,___          .-;'", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("       `\"-.`\\_...._/`.`", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("    ,      \\        /", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen(" .-' ',    / ()   ()\\", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("`'._   \\  /()    .  (|", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("   / <   |;,     __.;", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("   '-.'-.|  , \\    , \\", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("      `>.|;, \\_)    \\_)", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("       `-;     ,    /", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("          \\    /   <", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("           '. <`'-,_)", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("            '._)", loc, 0xE); loc.row ++;
+    delay(1000000);
+}
+
+void delay(uint32_t constant) {
+    uint32_t currentTick = 0;
+    uint32_t cachedTick = 0;
+    get_cur_tick(currentTick);
+    cachedTick = currentTick + constant;
+
+    while (currentTick < cachedTick)
+    {
+        get_cur_tick(currentTick);
+    }
 }

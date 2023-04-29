@@ -67,3 +67,9 @@ void get_date(uint16_t date, char *date_created);
 
 /* Get time on string format */
 void get_time(uint16_t time, char *time_str);
+
+void amongus(struct location loc);
+
+void pikachu(struct location loc);
+
+void delay(uint32_t factor);
