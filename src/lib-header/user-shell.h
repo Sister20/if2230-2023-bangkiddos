@@ -58,3 +58,12 @@ void mv(char src[256], char dest[256]);
 void whereis(uint32_t cluster_number, char arg[256], char paths[16][256], uint8_t * paths_count);
 void mkdir(char arg[256]);
 void cp(char src[256], char dest[256]);
+
+/* Int to String */
+void int_to_str(int num, char str[]);
+
+/* Get date on string format */
+void get_date(uint16_t date, char *date_created);
+
+/* Get time on string format */
+void get_time(uint16_t time, char *time_str);

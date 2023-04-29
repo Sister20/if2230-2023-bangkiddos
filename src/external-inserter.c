@@ -16,7 +16,7 @@ struct FAT32DriverRequest {
     uint32_t  buffer_size;
 } __attribute__((packed));
 
-void*  memcpy(void* restrict dest, const void* restrict src, size_t n);
+void*  memcpy(void* restrict dest, const void* restrict src, uint32_t n);
 
 void   initialize_filesystem_fat32(void);
 int8_t read(struct FAT32DriverRequest request);
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
 
     // Read target file, assuming file is less than 4 MiB
     FILE *fptr_target = fopen(argv[1], "r");
-    size_t filesize   = 0;
+    uint32_t filesize   = 0;
     if (fptr_target == NULL)
         filesize = 0;
     else {
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Filename : %s\n",  argv[1]);
-    printf("Filesize : %ld bytes\n", filesize);
+    printf("Filesize : %u bytes\n", filesize);
 
     // FAT32 operations
     initialize_filesystem_fat32();
