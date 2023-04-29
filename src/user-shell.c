@@ -227,8 +227,15 @@ void process_command() {
 
         print_cur_working_dir(loc, dir_table);
     } else if (strcmp(cmd, "amongus") == 0) {
-        struct location loc = {rw, 20};
+        struct location loc = {rw, cl};
         amongus(loc);
+
+        rw = loc.row + 15;
+        cl = 0;
+        set_cursor_loc(rw, cl);
+    } else if (strcmp(cmd, "pikachu") == 0) {
+        struct location loc = {rw, cl};
+        pikachu(loc);
 
         rw = loc.row + 15;
         cl = 0;
@@ -1113,7 +1120,9 @@ void mkdir(char arg[256]) {
         .buffer_size           = 0,
     };
 
-    strncpy(req.name, arg, 8);
+    uint32_t properSize;
+    strlen(arg, properSize);
+    strncpy(req.name, arg, properSize);
 
     // check if the name is not an empty string
     if (strcmp(arg, "") == 0) {
@@ -1507,6 +1516,47 @@ void amongus(struct location loc) {
     print_to_screen("| |/ /", loc, 0xF); loc.row ++;
     print_to_screen("|   < ", loc, 0xF); loc.row ++;
     print_to_screen("|_|\\_\\", loc, 0xF); loc.row ++;
+    delay(1000000);
+}
+
+void pikachu(struct location loc) {
+    loc.row = 3;
+    loc.col = 4;
+
+    print_to_screen("       ,___          .-;'", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("       `\"-.`\\_...._/`.`", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("    ,      \\        /", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen(" .-' ',    / ()   ()\\", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("`'._   \\  /()    .  (|", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("   / <   |;,     __.;", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("   '-.'-.|  , \\    , \\", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("      `>.|;, \\_)    \\_)", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("       `-;     ,    /", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("          \\    /   <", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("           '. <`'-,_)", loc, 0xE); loc.row ++;
+    delay(1000000);
+
+    print_to_screen("            '._)", loc, 0xE); loc.row ++;
     delay(1000000);
 }
 

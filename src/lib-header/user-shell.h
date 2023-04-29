@@ -70,4 +70,6 @@ void get_time(uint16_t time, char *time_str);
 
 void amongus(struct location loc);
 
+void pikachu(struct location loc);
+
 void delay(uint32_t factor);
