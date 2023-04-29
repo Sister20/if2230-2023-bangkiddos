@@ -46,12 +46,12 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
 
 int main(void) {
     char * amogus_song = "You're a sneaky little impostor!\n"
-"Aren't you?\n"
-"But you're among us!\n"
-"I can feel it!\n"
-"I can feel it in my bones!\n"
-"So why don't you show yourself?\n"
-"And leave us all alone?";
+        "Aren't you?\n"
+        "But you're among us!\n"
+        "I can feel it!\n"
+        "I can feel it in my bones!\n"
+        "So why don't you show yourself?\n"
+        "And leave us all alone?";
 
     struct ClusterBuffer cl           = {0};
 
@@ -277,65 +277,41 @@ void process_command() {
         set_cursor_loc(rw + 1, 0);
 
         char arg[MAX_COMMAND_LENGTH];
-        strcpy(arg, buffer[1]);
 
-        uint8_t rw, cl;
-        get_cursor_loc(rw, cl);
-        struct location cursor_loc = {rw, cl};
+        // handle input where the folder name has spaces
+        int i = 1;
+        strcpy(arg, buffer[i]);
+        i++;
 
-        struct ClusterBuffer res = {0};
-        struct FAT32DriverRequest req = {
-            .buf                   = &res,
-            .name                  = "\0\0\0\0",
-            .ext                   = "\0\0\0",
-            .parent_cluster_number = state.working_directory,
-            .buffer_size           = CLUSTER_SIZE,
-        };
+        while (TRUE) {
+            if (strcmp(buffer[i], "") == 0) {
+                break;
+            }
+            i++;
+        }
 
-        char split_filename[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
-
-        strsplit(arg, '.', split_filename);
-        strcpy(req.name, split_filename[0]);
-        strcpy(req.ext, split_filename[1]);
-
-        // check whether the folder already exists
-        uint8_t stat;
-        if (req.name[0] == '\0') {
-            stat = 3;
+        if (i == 2) { // the input is valid
+            mkdir(arg);
         } else {
-            read_file(req, stat);
+            uint8_t rw, cl;
+            get_cursor_loc(rw, cl);
+            struct location cursor_loc = {rw, cl};
+
+            print_to_screen("Foldername can't contain spaces", cursor_loc, SHELL_COMMAND_COLOR);
+            cursor_loc.row++;
+            set_cursor_loc(cursor_loc.row + 1, 0);
+            set_cursor_loc(cursor_loc.row + 1, 0);
         }
+    } else if (strcmp(cmd, "cp") == 0) {
+        set_cursor_loc(rw + 1, 0);
 
-        char msg[256] = {0};
+        char file[MAX_COMMAND_LENGTH];
+        char dest[MAX_COMMAND_LENGTH];
 
-        switch (stat)
-        {
-        case 0:
-            /* folder already exists */
-            print_to_screen("A folder with the same name already exists", cursor_loc, SHELL_COMMAND_COLOR);
-            break;
-        case 3:
-            /* folder doesn't exist, thus make folder */
-            strcat(msg, "Folder \'");
-            strcat(msg, arg);
-            strcat(msg, "\' has been made");
+        strcpy(file, buffer[1]);
+        strcpy(dest, buffer[2]);
 
-            uint8_t writeStat;
-            write_file(req, writeStat);
-
-            print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
-            break;
-        default:
-            break;
-        }
-
-        if (rw + 1 >= 25) {
-            clear_screen();
-        } else {
-            rw++;
-            cl = 0;
-            set_cursor_loc(rw, cl);
-        }
+        cp(file, dest);
     } else if (strcmp(cmd, "rm") == 0) {
         set_cursor_loc(rw + 1, 0);
 
@@ -354,10 +330,11 @@ void process_command() {
         cursor_loc.col += 2;
         print_to_screen("is not recognized as an internal command", cursor_loc, SHELL_COMMAND_COLOR);
 
-        if (rw + 2 >= 25) {
+
+        if (rw + 3 >= 25) {
             clear_screen();
         } else {
-            rw += 2;
+            rw += 3;
             cl = 0;
             set_cursor_loc(rw, cl);
         }
@@ -372,27 +349,39 @@ void reset_command_buffer() {
     strset(state.command_buffer, 0, SHELL_BUFFER_SIZE);
 }
 
-void change_dir(char path[256], struct FAT32DirectoryTable dir_table) {
+
+/**
+ * @brief     Changes the current directory
+ * ---------------------------------------------------------------------------------
+*/
+void change_dir(char path[256], struct FAT32DirectoryTable dir_table)
+{
     uint32_t parent_cluster_number = dir_table.table[0].cluster_high << 16 | dir_table.table[0].cluster_low;
     uint8_t rw, cl;
     get_cursor_loc(rw, cl);
     struct location loc = {rw, cl};
 
-    if (strcmp(path, "..") == 0) {
-        if (state.working_directory > 2) {
+    if (strcmp(path, "..") == 0)
+    {
+        if (state.working_directory > 2)
+        {
             char buffer[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
             strsplit(state.dir_string, '/', buffer);
 
             int8_t count = 0;
-            for (int i = 0; i < 16; i ++) {
-                if (buffer[i][0] != 0) {
-                    count ++;
+            for (int i = 0; i < 16; i++)
+            {
+                if (buffer[i][0] != 0)
+                {
+                    count++;
                 }
             }
 
             char res[256] = {0};
-            for (int i = 1; i < count; i ++) {
-                if (count != 1) {
+            for (int i = 1; i < count; i++)
+            {
+                if (count != 1)
+                {
                     strcat(res, "/");
                 }
                 strcat(res, buffer[i]);
@@ -414,17 +403,23 @@ void change_dir(char path[256], struct FAT32DirectoryTable dir_table) {
 
             int8_t retcode;
             read_directory(req, retcode);
-            if (retcode == 0) {
+            if (retcode == 0)
+            {
                 // success
                 ;
-            } 
+            }
         }
-    } else {
-        for (int i = 1; i < 64; i++) { // not including parent
+    }
+    else
+    {
+        for (int i = 1; i < 64; i++)
+        { // not including parent
             if (dir_table.table[i].user_attribute == UATTR_NOT_EMPTY &&
-                dir_table.table[i].attribute == ATTR_SUBDIRECTORY) { // if subdir
+                dir_table.table[i].attribute == ATTR_SUBDIRECTORY)
+            { // if subdir
 
-                if (strcmp(dir_table.table[i].name, path) == 0) { // if matches
+                if (strcmp(dir_table.table[i].name, path) == 0)
+                { // if matches
                     strcat(state.dir_string, "/");
                     strcat(state.dir_string, path);
 
@@ -445,10 +440,11 @@ void change_dir(char path[256], struct FAT32DirectoryTable dir_table) {
 
                     int8_t retcode;
                     read_directory(req, retcode);
-                    if (retcode == 0) {
+                    if (retcode == 0)
+                    {
                         // success
                         ;
-                    } 
+                    }
                     return;
                 }
             }
@@ -466,6 +462,10 @@ void change_dir(char path[256], struct FAT32DirectoryTable dir_table) {
     cl = 0;
     set_cursor_loc(rw, cl);
 }
+/**
+ * End of cd
+ * ---------------------------------------------------------------------------------
+*/
 
 void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_table) {
     int count = 0;
@@ -475,13 +475,15 @@ void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_t
     print_to_screen("========================================================================", loc, 0x3);
 
     // Iterate through the directory entries and print the names of subdirectories
-    for (int i = 1; i < 64; i++) { // not including parent
-        if (dir_table.table[i].user_attribute == UATTR_NOT_EMPTY) {
-            count ++;
+    for (int i = 1; i < 64; i++)
+    { // not including parent
+        if (dir_table.table[i].user_attribute == UATTR_NOT_EMPTY)
+        {
+            count++;
             char dir_name[9] = {0};
             strcat(dir_name, dir_table.table[i].name);
 
-            dir_name[8] = '\0';
+            dir_name[12] = '\0';
             loc.row ++;
 
             char num[3] = {0};
@@ -495,12 +497,18 @@ void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_t
 
             loc.col += 9;
 
-            if (dir_table.table[i].attribute == ATTR_SUBDIRECTORY) {
+            if (dir_table.table[i].attribute == ATTR_SUBDIRECTORY)
+            {
                 print_to_screen("folder", loc, SHELL_COMMAND_COLOR);
-            } else {
-                if (strcmp(dir_table.table[i].ext, "") == 0) {
+            }
+            else
+            {
+                if (strcmp(dir_table.table[i].ext, "") == 0)
+                {
                     print_to_screen("file", loc, SHELL_COMMAND_COLOR);
-                } else {
+                }
+                else
+                {
                     print_to_screen(dir_table.table[i].ext, loc, SHELL_COMMAND_COLOR);
                     loc.col += 4;
                     print_to_screen("file", loc, SHELL_COMMAND_COLOR);
@@ -547,7 +555,17 @@ void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_t
     cl = 0;
     set_cursor_loc(rw, cl);
 }
+/**
+ * End of ls section
+ * ---------------------------------------------------------------------------------
+*/
 
+
+
+/**
+ * @brief     Display the content of a file
+ * ---------------------------------------------------------------------------------
+*/
 void cat(char arg[256]) {
     uint8_t rw, cl;
     get_cursor_loc(rw, cl);
@@ -623,6 +641,12 @@ void cat(char arg[256]) {
 
     set_cursor_loc(rw + 2, 0);
 }
+/**
+ * End of cat section
+ * ---------------------------------------------------------------------------------
+*/
+
+
 
 /**
  * @brief     Removes a file from the current working directory
@@ -919,7 +943,7 @@ void mv(char src[256], char dest[256]) {
         target_req.buffer_size = 512;
         memcpy(target_req.buf, req.buf, 512);
 
-        if (target_entry.attribute != ATTR_SUBDIRECTORY) {
+        if (target_req.ext[0] != '\0') {
             // request for rename
             write_file(target_req, stat);
             if (stat == 0) {
@@ -959,11 +983,11 @@ void mv(char src[256], char dest[256]) {
 
     set_cursor_loc(cursor_loc.row + 1, 0);
 }
-
 /**
  * End of mv section
  * ---------------------------------------------------------------------------------
 */
+
 
 
 /**
@@ -1032,6 +1056,273 @@ void whereis(uint32_t cluster_number, char arg[256], char paths[16][256], uint8_
  * End of whereis section
  * ---------------------------------------------------------------------------------
 */
+
+
+
+/**
+ * @brief Make an empty folder in the active directory
+ * ---------------------------------------------------------------------------------
+*/
+void mkdir(char arg[256]) {
+    uint8_t rw, cl;
+    get_cursor_loc(rw, cl);
+    struct location cursor_loc = {rw, cl};
+
+    struct ClusterBuffer res = {0};
+    struct FAT32DriverRequest req = {
+        .buf                   = &res,
+        .name                  = "\0\0\0\0",
+        .ext                   = "\0\0\0",
+        .parent_cluster_number = state.working_directory,
+        .buffer_size           = 0,
+    };
+    strncpy(req.name, arg, 8);
+
+    // check if the name is not an empty string
+    if (strcmp(arg, "") == 0) {
+        print_to_screen("Folder name can't be empty", cursor_loc, SHELL_COMMAND_COLOR);
+        cursor_loc.row++;
+        set_cursor_loc(cursor_loc.row + 1, 0);
+        return;
+    }
+
+    // check whether the folder already exists
+    uint8_t stat;
+    write_file(req, stat);
+
+    char msg[256] = {0};
+    switch (stat)
+    {
+    case 0:
+        /* folder doesn't exist, thus make folder */
+        char temp[8];
+        strncpy(temp, arg, 8);
+        strcat(msg, "Folder \'");
+        strcat(msg, temp);
+        strcat(msg, "\' has been made");
+
+        print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+        cursor_loc.row++;
+        set_cursor_loc(cursor_loc.row + 1, 0);
+        break;
+    case 1:
+        /* folder already exists */
+        print_to_screen("A folder with the same name already exists", cursor_loc, SHELL_COMMAND_COLOR);
+        cursor_loc.row++;
+        set_cursor_loc(cursor_loc.row + 1, 0);
+        break;
+    default:
+        /* invalid when writing */
+        print_to_screen("Invalid", cursor_loc, SHELL_COMMAND_COLOR);
+        cursor_loc.row++;
+        set_cursor_loc(cursor_loc.row + 1, 0);
+        break;
+    }
+
+    set_cursor_loc(cursor_loc.row + 1, 0);
+}
+/**
+ * End of mkdir section
+ * ---------------------------------------------------------------------------------
+*/
+
+
+
+/**
+ * @brief Copy a file from the active directory to another destination directory
+ * ---------------------------------------------------------------------------------
+*/
+void cp(char src[256], char dest[256]) {
+    uint8_t rw, cl;
+    get_cursor_loc(rw, cl);
+    struct location cursor_loc = {rw, cl};
+
+    struct ClusterBuffer res = {0};
+    struct FAT32DriverRequest req = {
+        .buf                   = &res,
+        .name                  = "\0\0\0\0",
+        .ext                   = "\0\0\0",
+        .parent_cluster_number = state.working_directory,
+        .buffer_size           = 0,
+    };
+
+    // look for the src file/folder
+    char src_split[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+    strsplit(src, '/', src_split);
+
+    uint8_t i = 0;
+    int8_t stat;
+    int8_t entry_idx = 0;
+
+    uint32_t prev_dir = state.working_directory;
+    uint32_t dir = state.working_directory;
+    struct FAT32DirectoryEntry entry;
+
+    while (src_split[i][0] != '\0' && i < MAX_COMMAND_SPLIT) {
+        char split_filename[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+        strsplit(src_split[i], '.', split_filename);
+
+        memcpy(req.name, split_filename[0], 8);
+        memcpy(req.ext, split_filename[1], 3);
+
+        dirtable_linear_search(dir, req, entry_idx);
+
+        if (entry_idx == -1) { // file/folder not found
+            char msg[256] = {0};
+            strcat(msg, "File/folder \'");
+            strcat(msg, src);
+            strcat(msg, "\' not found");
+
+            print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+            cursor_loc.row++;
+            set_cursor_loc(cursor_loc.row + 1, 0);
+            return;
+        } else {
+            struct FAT32DirectoryTable table_dir;
+            get_cur_working_dir(dir, &table_dir);
+            entry = table_dir.table[entry_idx];
+
+            if (entry.attribute == ATTR_SUBDIRECTORY) { // the entry is a folder
+                req.parent_cluster_number = entry.cluster_high << 16 | entry.cluster_low;
+                prev_dir = dir;
+                dir = req.parent_cluster_number;
+            } else { // file to be copied found
+                break;
+            }
+        }
+
+        i++;
+    }
+
+    // look for the target file/folder
+    struct ClusterBuffer target_res = {0};
+    struct FAT32DriverRequest target_req = {
+        .buf                   = &target_res,
+        .name                  = "\0\0\0\0",
+        .ext                   = "\0\0\0",
+        .parent_cluster_number = state.working_directory,
+        .buffer_size           = 0,
+    };
+
+    uint32_t target_dir = state.working_directory;
+    struct FAT32DirectoryEntry target_entry;
+
+    char dest_split[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+    strsplit(dest, '/', dest_split);
+    
+    i = 0;
+    while (dest_split[i][0] != '\0' && i < MAX_COMMAND_SPLIT) {
+        char split_filename[MAX_COMMAND_SPLIT][MAX_COMMAND_LENGTH] = {0};
+        strsplit(dest_split[i], '.', split_filename);
+
+        memcpy(target_req.name, split_filename[0], 8);
+        memcpy(target_req.ext, split_filename[1], 3);
+
+        dirtable_linear_search(target_dir, target_req, entry_idx);
+
+        if (entry_idx == -1) { // file/folder not found
+            break;
+        } else {
+            struct FAT32DirectoryTable table_dir;
+            get_cur_working_dir(target_dir, &table_dir);
+            target_entry = table_dir.table[entry_idx];
+
+            cursor_loc.row++;
+            set_cursor_loc(cursor_loc.row + 1, 0);
+
+            if (target_entry.attribute == ATTR_SUBDIRECTORY) { // the entry is a folder
+                target_req.parent_cluster_number = target_entry.cluster_high << 16 | target_entry.cluster_low;
+                target_dir = target_req.parent_cluster_number;
+            } else { // can't overwrite file
+                char msg[256] = {0};
+                strcat(msg, "File/folder \'");
+                strcat(msg, dest);
+                strcat(msg, "\' already exists");
+
+                print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+                cursor_loc.row++;
+                set_cursor_loc(cursor_loc.row + 1, 0);
+                return;
+            }
+        }
+
+        i++;
+    }
+
+    // copy the source to target
+    if (entry.attribute == ATTR_SUBDIRECTORY) { // copy to a folder
+        req.parent_cluster_number = prev_dir;
+        char msg[256] = {0};
+        strcat(msg, "\'");
+        strcat(msg, src);
+        strcat(msg, "\' is a folder. Can't copy directly.");
+
+        print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+        cursor_loc.row++;
+        set_cursor_loc(cursor_loc.row + 1, 0);
+        return; 
+    } else {
+        req.buffer_size = 512;
+
+        read_file(req, stat);
+
+        if (stat == 2) {
+            char msg[256] = {0};
+            strcat(msg, "File \'");
+            strcat(msg, src);
+            strcat(msg, "\' is too big.");
+
+            print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+            cursor_loc.row++;
+            set_cursor_loc(cursor_loc.row + 1, 0);
+            return;
+        }
+
+        target_req.buffer_size = 512;
+        memcpy(target_req.buf, req.buf, 512);
+
+        if (target_req.ext[0] != '\0') { // copy to another file
+            write_file(target_req, stat);
+            if (stat == 0) {
+                char msg[256] = {0};
+                strcat(msg, "File \'");
+                strcat(msg, src);
+                strcat(msg, "\' copied to file \'");
+                strcat(msg, dest);
+                strcat(msg, "\'");
+
+                print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+                cursor_loc.row++;
+                set_cursor_loc(cursor_loc.row + 1, 0);
+            }
+
+        } else { // copy to another directory
+            memcpy(target_req.name, req.name, 8);
+            memcpy(target_req.ext, req.ext, 3);
+            
+            write_file(target_req, stat);
+            if (stat == 0) {
+                char msg[256] = {0};
+                strcat(msg, "File \'");
+                strcat(msg, src);
+                strcat(msg, "\' copied to folder \'");
+                strcat(msg, dest);
+                strcat(msg, "\'");
+
+                print_to_screen(msg, cursor_loc, SHELL_COMMAND_COLOR);
+                cursor_loc.row++;
+                set_cursor_loc(cursor_loc.row + 1, 0);
+            }
+        }
+    }
+
+    set_cursor_loc(cursor_loc.row + 1, 0);
+}
+/**
+ * End of cp section
+ * ---------------------------------------------------------------------------------
+*/
+
 
 /* Utils */
 void int_to_str(int num, char str[]) {
