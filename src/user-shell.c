@@ -364,6 +364,22 @@ void change_dir(char path[256], struct FAT32DirectoryTable dir_table) {
             uint32_t size = 256;
             strncpy(state.dir_string, res, size);
             state.working_directory = parent_cluster_number;
+
+            // Update access date
+            // struct FAT32DriverRequest req = {
+            //     .buf = (uint8_t *) 0,
+            //     .name = dir_table.table[0].name,
+            //     .ext = "\0\0\0",
+            //     .parent_cluster_number = parent_cluster_number,
+            //     .buffer_size = CLUSTER_SIZE
+            // };
+
+            // int32_t retcode;
+            // read_directory(req, retcode);
+            // if (retcode == 0) {
+            //     // success
+            //     ;
+            // }
         }
     } else {
         for (int i = 1; i < 64; i++) { // not including parent
@@ -377,6 +393,21 @@ void change_dir(char path[256], struct FAT32DirectoryTable dir_table) {
                     uint32_t cluster_number = dir_table.table[i].cluster_high << 16 | dir_table.table[i].cluster_low;
 
                     state.working_directory = cluster_number;
+
+                    // Update access date
+                    // struct FAT32DriverRequest req = {
+                    //     .buf = (uint8_t *) 0,
+                    //     .name = dir_table.table[0].name,
+                    //     .ext = "\0\0\0",
+                    //     .parent_cluster_number = parent_cluster_number,
+                    //     .buffer_size = CLUSTER_SIZE
+                    // }
+                    // int32_t retcode;
+                    // read_directory(req, retcode);
+                    // if (retcode == 0) {
+                    //     // success
+                    //     ;
+                    // }
                     break;
                 }
             }
@@ -393,15 +424,6 @@ void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_t
     for (int i = 1; i < 64; i++) { // not including parent
         if (dir_table.table[i].user_attribute == UATTR_NOT_EMPTY) {
             char dir_name[13] = {0};
-            // int j;
-            // for (j = 0; j < 8; j++)
-            // {
-            //     if (dir_table.table[i].name[j] == ' ')
-            //     {
-            //         break;
-            //     }
-            //     dir_name[j] = dir_table.table[i].name[j];
-            // }
             strcat(dir_name, dir_table.table[i].name);
             if (dir_table.table[i].attribute != ATTR_SUBDIRECTORY) {
                 strcat(dir_name, ".");
@@ -411,6 +433,64 @@ void print_cur_working_dir(struct location loc, struct FAT32DirectoryTable dir_t
             dir_name[12] = '\0';
             loc.row ++;
             print_to_screen(dir_name, loc, SHELL_COMMAND_COLOR);
+
+            // Extract hours and minutes from date
+            uint16_t create_time = dir_table.table[i].create_time;
+            uint8_t minutes = create_time & 0x00FF;
+            uint8_t hours = (create_time & 0xFF00) >> 8;
+
+            // Convert hours and minutes to strings
+            char hour_str[3], min_str[3];
+            hour_str[0] = '0' + (hours / 10);  // First digit of hours
+            hour_str[1] = '0' + (hours % 10);  // Second digit of hours
+            hour_str[2] = '\0';                // Null terminator for string
+            min_str[0] = '0' + (minutes / 10); // First digit of minutes
+            min_str[1] = '0' + (minutes % 10); // Second digit of minutes
+            min_str[2] = '\0';                 // Null terminator for string
+
+            char time_str[5] = {0};
+
+            strcat(time_str, hour_str);
+            strcat(time_str, ":");
+            strcat(time_str, min_str);
+
+            // Extract day, month, and year from date
+            uint16_t create_date = dir_table.table[i].create_date;
+            uint8_t day = create_date & 0x1F;
+            uint8_t month = (create_date >> 5) & 0x0F;
+            uint16_t year = ((create_date >> 9) & 0x7F) + 2000;
+
+            // Convert day, month, and year to strings
+            char day_str[3], month_str[3], year_str[5];
+            day_str[0] = '0' + (day / 10);     // First digit of day
+            day_str[1] = '0' + (day % 10);     // Second digit of day
+            day_str[2] = '\0';                 // Null terminator for string
+
+            month_str[0] = '0' + (month / 10); // First digit of month
+            month_str[1] = '0' + (month % 10); // Second digit of month
+            month_str[2] = '\0';               // Null terminator for string
+
+            year_str[0] = '0' + (year / 1000);       // Thousands digit of year
+            year_str[1] = '0' + ((year / 100) % 10); // Hundreds digit of year
+            year_str[2] = '0' + ((year / 10) % 10);  // Tens digit of year
+            year_str[3] = '0' + (year % 10);         // Ones digit of year
+            year_str[4] = '\0';                      // Null terminator for string
+
+            char date_created[10] = {0};
+
+            strcat(date_created, day_str);
+            strcat(date_created, " ");
+            strcat(date_created, month_str);
+            strcat(date_created, " ");
+            strcat(date_created, year_str);
+
+            loc.col = loc.col + 15;
+            print_to_screen(time_str, loc, SHELL_COMMAND_COLOR);
+
+            loc.col = loc.col + 6;
+            print_to_screen(date_created, loc, SHELL_COMMAND_COLOR);      
+
+            loc.col = 0;
         }
     }
 

@@ -63,11 +63,14 @@ void cmos_read_rtc(struct time *t)
     if (!(status & 0x04)) {
         t->second = (t->second & 0x0F) + ((t->second >> 4) * 10);
         t->minute = (t->minute & 0x0F) + ((t->minute >> 4) * 10);
-        t->hour = (t->hour & 0x0F) + (((t->hour & 0x70) >> 4) * 10) + (t->hour & 0x80 ? 12 : 0);
+        t->hour = ((t->hour & 0x0F) + (((t->hour & 0x70) >> 4) * 10)) | (t->hour & 0x80);
+        
+        // convert hour to GMT + 7
+        t->hour += 7;
+
         t->day = (t->day & 0x0F) + ((t->day >> 4) * 10);
         t->month = (t->month & 0x0F) + ((t->month >> 4) * 10);
         t->year = (t->year & 0x0F) + ((t->year >> 4) * 10);
-        t->year += 2000;
     }
 
     // Enable non-maskable interrupts
