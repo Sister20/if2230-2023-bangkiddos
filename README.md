@@ -12,21 +12,21 @@
 | Addin Munawwar Yusuf           | 13521085 |
 | Aulia Mey Diva Annandya        | 13521103 |
 
-## Features
-1. Interrupt, including :
-- Interrupt Descriptor Table (IDT)
-- PIC Remapping
-- Interrupt Handler / Interrupt Service Routine (ISR)
-- Load IDT & Testing Interrupt
-2. Keyboard Device Driver, including :
-- IRQ1 - Keyboard Controller
-- Keyboard Driver Interfaces
-- Keyboard ISR
-3. File System **FAT32 IF2230 edition**, including :
-- Disk Driver & Image
-- File System: FAT32 - IF2230 edition
-- File System Initializer
-- File System CRUD Operation (`read_directory`, `read`, `write`, and `delete`) to modify disk image
+## Feature
+1. Paging, including:
+- Paging Data Structures
+- Higher Half Kernel
+- Activate Paging
+2. User Mode, including :
+- External Program - Inserter
+- User GDT & Task Segment State
+- Simple Memory Allocator
+- Simple User Program
+- Execute Program
+- Launching User Mode
+3. Shell, including :
+- System Calls
+- Shell Implementation
 
 ## Technologies Used
 1. [Window Subsytem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install)
@@ -40,16 +40,15 @@
 ## Setup
 1. Install all of the requirements
 
-```
 sudo apt update
 sudo apt install gcc nasm make qemu-system-x86 genisoimage
-```
 
 2. Run using WSL2
 3. Clone this repository
 4. run `make build`
 5. run `make disk`
-5. `cd bin/` and type `qemu-system-i386 -s -cdrom OS2023.iso`
+6. run `make insert-shell`
+7. `cd bin/` and type `qemu-system-i386 -s -S -drive file=storage.bin,format=raw,if=ide,index=0,media=disk -cdrom OS2023.iso`
 
 ## References
 1. [Intel Manual](https://www.intel.com/content/www/us/en/architecture-and-technology/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.html.html)
@@ -60,4 +59,4 @@ sudo apt install gcc nasm make qemu-system-x86 genisoimage
 ## Milestone
 - [x] Milestone1
 - [x] Milestone2
-- [ ] MilestoneX
+- [x] MilestoneX
