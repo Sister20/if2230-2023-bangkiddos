@@ -11,30 +11,6 @@
 #include "lib-header/paging.h"
 #include "lib-header/kernel_loader.h"
 
-void amongus() {
-    printString("  _", 5, 20, 0xF);
-    printString(" | |", 6, 20, 0xF);
-    printString(" | |__   ___ _   _", 7, 20, 0xF);
-    printString(" | '_ \\ / _ \\ | | |", 8, 20, 0xF);
-    printString(" | | | |  __/ |_| |", 9, 20, 0xF);
-    printString(" |_| |_|\\___|\\__, |", 10, 20, 0xF);
-    printString("              __/ |", 11, 20, 0xF);
-    printString("             |___/", 12, 20, 0xF);
-
-    printBlock(3, 8, 7, 0xF);
-    printBlock(4, 7, 2, 0xF); printBlock(4, 9, 7, 0x4); printBlock(4, 15, 1, 0xF);
-    printBlock(5, 7, 2, 0xF); printBlock(5, 9, 3, 0x4); printBlock(5, 12, 5, 0xF);
-    printBlock(6, 6, 2, 0xF); printBlock(6, 8, 3, 0x4); printBlock(6, 11, 1, 0xF); printBlock(6, 12, 4, 0x3); printBlock(6, 16, 1, 0xF);
-    printBlock(7, 5, 3, 0xF); printBlock(7, 8, 3, 0x4); printBlock(7, 11, 1, 0xF); printBlock(7, 12, 4, 0x3); printBlock(7, 16, 1, 0xF);
-    printBlock(8, 5, 1, 0xF); printBlock(8, 6, 1, 0x4); printBlock(8, 7, 1, 0xF); printBlock(8, 8, 4, 0x4); printBlock(8, 12, 4, 0xF);
-    printBlock(9, 5, 1, 0xF); printBlock(9, 6, 1, 0x4); printBlock(9, 7, 1, 0xF); printBlock(9, 8, 7, 0x4); printBlock(9, 15, 1, 0xF);
-    printBlock(10, 5, 1, 0xF); printBlock(10, 6, 1, 0x4); printBlock(10, 7, 1, 0xF); printBlock(10, 8, 7, 0x4); printBlock(10, 15, 1, 0xF);
-    printBlock(11, 5, 3, 0xF); printBlock(11, 8, 7, 0x4); printBlock(11, 15, 1, 0xF);
-    printBlock(12, 7, 1, 0xF); printBlock(12, 8, 3, 0x4); printBlock(12, 11, 1, 0xF); printBlock(12, 12, 3, 0x4); printBlock(12, 15, 1, 0xF);
-    printBlock(13, 7, 2, 0xF); printBlock(13, 9, 2, 0x4); printBlock(13, 11, 1, 0xF); printBlock(13, 12, 3, 0x4); printBlock(13, 15, 1, 0xF);
-    printBlock(14, 8, 3, 0xF); printBlock(14, 12, 3, 0xF);
-}
-
 // void kernel_setup(void) {
 //     enter_protected_mode(&_gdt_gdtr);
 //     pic_remap();
