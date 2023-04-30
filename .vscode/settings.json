@@ -1,3 +1,14 @@
 {
     "debug.onTaskErrors": "debugAnyway",
+    "files.associations": {
+        "idt.h": "c",
+        "interrupt.h": "c",
+        "stdtype.h": "c",
+        "fat32.h": "c",
+        "user-shell.h": "c",
+        "stdmem.h": "c",
+        "string.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled",
+    "C_Cpp.intelliSenseEngineFallback": "enabled",
 }

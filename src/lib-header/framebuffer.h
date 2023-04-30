@@ -1,9 +1,9 @@
 #ifndef _FRAMEBUFFER_H
 #define _FRAMEBUFFER_H
 
-#include "lib-header/stdtype.h"
+#include "stdtype.h"
 
-#define MEMORY_FRAMEBUFFER (uint8_t *) 0xB8000
+#define MEMORY_FRAMEBUFFER (uint8_t *) 0xC00B8000
 #define CURSOR_PORT_CMD    0x03D4
 #define CURSOR_PORT_DATA   0x03D5
 
@@ -35,11 +35,24 @@ void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg)
 */
 void framebuffer_set_cursor(uint8_t r, uint8_t c);
 
+/**
+ * Get current location of cursor
+ * 
+ * @param r pointer to row
+ * @param c pointer to column
+*/
+void framebuffer_get_cursor(uint8_t *r, uint8_t *c);
+
 /** 
  * Set all cell in framebuffer character to 0x00 (empty character)
  * and color to 0x07 (gray character & black background)
  * 
  */
 void framebuffer_clear(void);
+
+/* Tambahan */
+void printString(char *string, uint8_t row, uint8_t col, uint8_t color);
+
+void printBlock(uint8_t row, uint8_t col, uint8_t n, uint8_t color);
 
 #endif

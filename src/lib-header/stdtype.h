@@ -4,7 +4,7 @@
 /**
  * Unsigned integer representing object size
 */
-typedef unsigned int size_t;
+// typedef unsigned int size_t;
 
 /**
  * 32-bit unsigned integer
